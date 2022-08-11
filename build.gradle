@@ -1,0 +1,39 @@
+plugins {
+    id 'org.springframework.boot' version '2.7.2'
+    id 'io.spring.dependency-management' version '1.0.12.RELEASE'
+    id 'java'
+}
+
+group = 'com.ftd'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.2'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    runtimeOnly 'org.postgresql:postgresql:42.3.6'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.2'
+
+    implementation ('org.telegram:telegrambots-spring-boot-starter:6.1.0') {
+        // because https://snyk.io/vuln/maven:com.fasterxml.jackson.core:jackson-databind
+        exclude group: ' com.fasterxml.jackson.core', module: 'jackson-databind'
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
