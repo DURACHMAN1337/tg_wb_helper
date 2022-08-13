@@ -1,4 +1,4 @@
-package com.ftd.telegramhelper.config;
+package com.ftd.telegramhelper.config.bot;
 
 public interface TelegramBotConfig {
     String getUsername();

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class FeedbackService {
     }
 
     // TODO: test this
-    public void updateFeedback(TelegramUser forUser, String message) {
+    public void updateFeedback(TelegramUser forUser, String message) throws TelegramApiException {
         String feedbackMessageId = forUser.getFeedbackMessageId();
         if (StringUtils.hasText(feedbackMessageId)) {
             feedbackChannelService.updateFeedback(feedbackMessageId, message);

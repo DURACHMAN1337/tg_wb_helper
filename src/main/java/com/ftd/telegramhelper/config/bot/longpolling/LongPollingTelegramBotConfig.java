@@ -1,6 +1,6 @@
-package com.ftd.telegramhelper.config.longpolling;
+package com.ftd.telegramhelper.config.bot.longpolling;
 
-import com.ftd.telegramhelper.config.TelegramBotConfig;
+import com.ftd.telegramhelper.config.bot.TelegramBotConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;

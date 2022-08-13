@@ -1,7 +1,7 @@
 package com.ftd.telegramhelper.bot.webhook;
 
 import com.ftd.telegramhelper.bot.facade.TelegramBotFacadeImpl;
-import com.ftd.telegramhelper.config.webhook.WebHookTelegramBotConfig;
+import com.ftd.telegramhelper.config.bot.webhook.WebHookTelegramBotConfig;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;

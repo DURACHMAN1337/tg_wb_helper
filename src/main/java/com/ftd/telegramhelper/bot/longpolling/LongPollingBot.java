@@ -1,7 +1,7 @@
 package com.ftd.telegramhelper.bot.longpolling;
 
 import com.ftd.telegramhelper.bot.facade.TelegramBotFacade;
-import com.ftd.telegramhelper.config.longpolling.LongPollingTelegramBotConfig;
+import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;

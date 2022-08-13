@@ -1,7 +1,7 @@
-package com.ftd.telegramhelper.config.webhook;
+package com.ftd.telegramhelper.config.bot.webhook;
 
 
-import com.ftd.telegramhelper.config.TelegramBotConfig;
+import com.ftd.telegramhelper.config.bot.TelegramBotConfig;
 
 //@Configuration
 //@PropertySource("classpath:application.properties")
