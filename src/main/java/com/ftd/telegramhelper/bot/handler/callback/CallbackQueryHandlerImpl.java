@@ -1,9 +1,11 @@
 package com.ftd.telegramhelper.bot.handler.callback;
 
 import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
+import com.ftd.telegramhelper.message.MessageBundle;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.callback.Callback;
 import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
+import com.ftd.telegramhelper.util.response.ResponseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
@@ -17,6 +19,10 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
 
 
     private final WebApplicationContext webApplicationContext;
+    @Autowired
+    private MessageBundle messageBundle;
+    @Autowired
+    private ResponseHelper responseHelper;
 
     @Autowired
     public CallbackQueryHandlerImpl(WebApplicationContext webApplicationContext) {
@@ -25,25 +31,20 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
 
     @Override
     public PartialBotApiMethod<?> processCallbackQuery(CallbackQuery callbackQuery, TelegramUser telegramUser) {
-        //chat_id Главного канала(Получилось отправлять туда сообщения)
-        String chatId = "-1001720487296";
-        String chatId1 = "@test1337123";
+        String userChatId = telegramUser.getChatId().toString();
+        String channelChatId = "@test1337123";
         SendMessage sendMessage = null;
         if (Callback.FIRST.equals(callbackQuery.getData())) {
-            sendMessage = InlineKeyboardMarkupBuilder.create(chatId1)
-                    .buildAsSendMessage();
-            StringBuilder sb = new StringBuilder();
-            sb.append(telegramUser.getTelegramId())
-                    .append("\n")
-                    .append(telegramUser.getFirstName())
-                    .append(" ")
-                    .append(telegramUser.getLastName())
-                    .append("\n")
-                    .append(telegramUser.getUsername());
-
-            sendMessage.setText(sb.toString());
-            sendMessage.setChatId(chatId1);
-
+            sendMessage =  responseHelper.createPostForChannel(channelChatId,telegramUser);
+        }
+        if (Callback.SECOND.equals(callbackQuery.getData())) {
+            sendMessage = responseHelper.createInfoPage(userChatId);
+        }
+        if (Callback.THIRD.equals(callbackQuery.getData())){
+            sendMessage = responseHelper.createHelpPage(userChatId);
+        }
+        if (Callback.BACK.equals(callbackQuery.getData())){
+            responseHelper.createMainMenu(userChatId);
         }
         try {
             webApplicationContext.getBean(LongPollingBot.class).execute(sendMessage);

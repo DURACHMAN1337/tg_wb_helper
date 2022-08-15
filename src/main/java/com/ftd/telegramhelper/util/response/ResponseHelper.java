@@ -1,6 +1,8 @@
 package com.ftd.telegramhelper.util.response;
 
 import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
+import com.ftd.telegramhelper.message.MessageBundle;
+import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -13,19 +15,21 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class ResponseHelper {
 
     private final ApplicationContext applicationContext;
+    @Autowired
+    private MessageBundle messageBundle;
 
     @Autowired
     public ResponseHelper(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
-    public SendMessage createMainMenu(Long chatId) {
+    public SendMessage createMainMenu(String chatId) {
         SendMessage message = InlineKeyboardMarkupBuilder
-                .create(String.valueOf(chatId), "123")
+                .create(String.valueOf(chatId), messageBundle.loadMessage("ftd.telegram_helper.message.welcome"))
                 .row()
-                .button("1", "1")
-                .button("2", "2")
-                .button("3", "3")
+                .button("1️⃣", "1")
+                .button("2️⃣", "2")
+                .button("3️⃣", "3")
                 .endRow()
                 .buildAsSendMessage();
         try {
@@ -33,6 +37,46 @@ public class ResponseHelper {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+        return message;
+    }
+
+    public SendMessage createInfoPage(String chatId) {
+        SendMessage message = InlineKeyboardMarkupBuilder.create(
+                        chatId,
+                        messageBundle.loadMessage("ftd.telegram_helper.message.info")
+                )
+                .row()
+                .button("Назад", "back")
+                .endRow()
+                .buildAsSendMessage();
+        return message;
+    }
+
+    public SendMessage createHelpPage(String chatId){
+        SendMessage message = InlineKeyboardMarkupBuilder.create(
+                        chatId,
+                        messageBundle.loadMessage("ftd.telegram_helper.message.help")
+                )
+                .row()
+                .button("Назад", "back")
+                .endRow()
+                .buildAsSendMessage();
+        return message;
+    }
+
+    public SendMessage createPostForChannel(String channelChatId, TelegramUser telegramUser) {
+        SendMessage message = InlineKeyboardMarkupBuilder.create(channelChatId)
+                .buildAsSendMessage();
+        StringBuilder sb = new StringBuilder();
+        sb.append(telegramUser.getTelegramId())
+                .append("\n")
+                .append(telegramUser.getFirstName())
+                .append(" ")
+                .append(telegramUser.getLastName())
+                .append("\n")
+                .append(telegramUser.getUsername());
+        message.setText(sb.toString());
+        message.setChatId(channelChatId);
         return message;
     }
 

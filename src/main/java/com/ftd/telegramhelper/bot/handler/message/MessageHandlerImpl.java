@@ -30,7 +30,7 @@ public class MessageHandlerImpl implements MessageHandler {
 
         if (Command.START.getValue().equals(command)) {
             createTelegramUserIfNotExist(user,chatId);
-            return responseHelper.createMainMenu(chatId);
+            return responseHelper.createMainMenu(chatId.toString());
         }
 
         return null;
