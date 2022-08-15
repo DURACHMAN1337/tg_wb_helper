@@ -57,6 +57,7 @@ public class TelegramUserService {
         telegramUser.setFirstName(user.getFirstName());
         telegramUser.setLastName(user.getLastName());
         telegramUser.setChatId(chatId);
+        telegramUser.setId(UUID.randomUUID());
 
         return save(telegramUser);
     }

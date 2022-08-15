@@ -33,8 +33,9 @@ public class TelegramBotFacadeImpl implements TelegramBotFacade {
         if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             TelegramUser telegramUser = telegramUserService.findBy(callbackQuery.getFrom().getId());
-            if (telegramUser != null)
-                return callbackQueryHandler.processCallbackQuery(callbackQuery, telegramUser);
+            if (telegramUser == null)
+                telegramUser = telegramUserService.createAndSaveFrom(callbackQuery.getFrom(), callbackQuery.getMessage().getChatId());
+            return callbackQueryHandler.processCallbackQuery(callbackQuery, telegramUser);
         }
         if (update.hasMessage()) {
             return messageHandler.processMessage(update.getMessage());

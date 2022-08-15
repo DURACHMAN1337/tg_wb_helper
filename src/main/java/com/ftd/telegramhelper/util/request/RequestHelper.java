@@ -31,13 +31,14 @@ public class RequestHelper {
 
     public List<Update> getUpdates(String chatId) {
         String url = String.format(GET_UPDATES_URL, getBotToken(), chatId);
-        return restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<Update>>() {
-                }
-        ).getBody();
+        String json = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        String.class)
+                .getBody();
+        // TODO: 15.08.2022 mapping from json
+        return null;
     }
 
     @NotNull

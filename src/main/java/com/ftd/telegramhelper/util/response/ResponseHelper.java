@@ -20,7 +20,7 @@ public class ResponseHelper {
     }
 
     public SendMessage createMainMenu(Long chatId) {
-        return InlineKeyboardMarkupBuilder
+        SendMessage message = InlineKeyboardMarkupBuilder
                 .create(String.valueOf(chatId), "123")
                 .row()
                 .button("1", "1")
@@ -28,6 +28,12 @@ public class ResponseHelper {
                 .button("3", "3")
                 .endRow()
                 .buildAsSendMessage();
+        try {
+            applicationContext.getBean(LongPollingBot.class).execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+        return message;
     }
 
     public Message sendMessage(String chatId, String message) throws TelegramApiException {
