@@ -6,11 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 @Service
 public class FeedbackService {
@@ -22,29 +20,17 @@ public class FeedbackService {
         this.feedbackChannelService = feedbackChannelService;
     }
 
-    public void setFeedbackChannel(String channelId) {
-        feedbackChannelService.setActualFeedbackChannel(channelId);
-    }
-
-    // TODO: test this
-    public void updateFeedback(TelegramUser forUser, String message) throws TelegramApiException {
+    public void updateFeedback(TelegramUser forUser, @Nullable String message) throws TelegramApiException {
         String feedbackMessageId = forUser.getFeedbackMessageId();
-        if (StringUtils.hasText(feedbackMessageId)) {
+        boolean feedbackAlreadyExist = StringUtils.hasText(feedbackMessageId);
+        if (feedbackAlreadyExist && message != null) {
             feedbackChannelService.updateFeedback(feedbackMessageId, message);
-        } else {
+        } else if (!feedbackAlreadyExist) {
             Message feedbackMessage = feedbackChannelService.createFeedback(forUser);
-            feedbackMessageId = feedbackMessage.getMessageId().toString();
-            feedbackChannelService.updateFeedback(feedbackMessageId, message);
+            feedbackMessageId = String.valueOf(feedbackMessage.getMessageId());
+            if (message != null) {
+                feedbackChannelService.updateFeedback(feedbackMessageId, message);
+            }
         }
-    }
-
-    public List<Update> getUpdates(TelegramUser forUser) {
-        return feedbackChannelService
-                .getChannelUpdates()
-                .stream()
-                .filter(update -> { // TODO: create filter to find right updates for current user
-                    return true; // maybe: update.getMessage().getReplyToMessage().getText().equals(forUser.getTelegramId());
-                })
-                .collect(Collectors.toList());
     }
 }

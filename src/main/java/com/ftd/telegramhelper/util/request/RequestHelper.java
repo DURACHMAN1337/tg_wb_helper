@@ -1,9 +1,9 @@
 package com.ftd.telegramhelper.util.request;
 
 import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -31,14 +31,16 @@ public class RequestHelper {
 
     public List<Update> getUpdates(String chatId) {
         String url = String.format(GET_UPDATES_URL, getBotToken(), chatId);
-        String json = restTemplate.exchange(
-                        url,
-                        HttpMethod.GET,
-                        null,
-                        String.class)
-                .getBody();
+        String body = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                String.class
+        ).getBody();
 
-        // TODO: 15.08.2022 mapping from json
+        JSONObject json = new JSONObject(body);
+        Object result = json.get("result");
+
         return null;
     }
 

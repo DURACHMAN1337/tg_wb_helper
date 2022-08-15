@@ -1,56 +1,47 @@
 package com.ftd.telegramhelper.bot.handler.callback;
 
-import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
-import com.ftd.telegramhelper.message.MessageBundle;
+import com.ftd.telegramhelper.feedback.FeedbackService;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.callback.Callback;
-import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.WebApplicationContext;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Component
 public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
 
-
-    private final WebApplicationContext webApplicationContext;
-    @Autowired
-    private MessageBundle messageBundle;
-    @Autowired
-    private ResponseHelper responseHelper;
+    private final FeedbackService feedbackService;
+    private final ResponseHelper responseHelper;
 
     @Autowired
-    public CallbackQueryHandlerImpl(WebApplicationContext webApplicationContext) {
-        this.webApplicationContext = webApplicationContext;
+    public CallbackQueryHandlerImpl(FeedbackService feedbackService, ResponseHelper responseHelper) {
+        this.feedbackService = feedbackService;
+        this.responseHelper = responseHelper;
     }
 
     @Override
     public PartialBotApiMethod<?> processCallbackQuery(CallbackQuery callbackQuery, TelegramUser telegramUser) {
-        String userChatId = telegramUser.getChatId().toString();
-        String channelChatId = "@test1337123";
-        SendMessage sendMessage = null;
+        Integer messageId = callbackQuery.getMessage().getMessageId();
+        String chatId = String.valueOf(telegramUser.getChatId());
         if (Callback.FIRST.equals(callbackQuery.getData())) {
-            sendMessage =  responseHelper.createPostForChannel(channelChatId,telegramUser);
+            try {
+                feedbackService.updateFeedback(telegramUser, null);
+                return responseHelper.createInstructionMessage(chatId, messageId);
+            } catch (Exception e) {
+                return responseHelper.createErrorResponse(callbackQuery);
+            }
+        } else if (Callback.SECOND.equals(callbackQuery.getData())) {
+            return responseHelper.createInfoPage(chatId, messageId);
         }
-        if (Callback.SECOND.equals(callbackQuery.getData())) {
-            sendMessage = responseHelper.createInfoPage(userChatId);
+        if (Callback.THIRD.equals(callbackQuery.getData())) {
+            return responseHelper.createHelpPage(chatId, messageId);
         }
-        if (Callback.THIRD.equals(callbackQuery.getData())){
-            sendMessage = responseHelper.createHelpPage(userChatId);
+        if (Callback.BACK.equals(callbackQuery.getData())) {
+            return responseHelper.recreateMainMenu(chatId, messageId);
+        } else {
+            return responseHelper.createUnknownCallbackResponse(callbackQuery);
         }
-        if (Callback.BACK.equals(callbackQuery.getData())){
-            responseHelper.createMainMenu(userChatId);
-        }
-        try {
-            webApplicationContext.getBean(LongPollingBot.class).execute(sendMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-        return sendMessage;
     }
 }

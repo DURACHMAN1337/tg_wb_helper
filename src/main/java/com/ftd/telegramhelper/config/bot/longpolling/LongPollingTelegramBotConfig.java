@@ -18,9 +18,6 @@ public class LongPollingTelegramBotConfig implements TelegramBotConfig {
     @Value("${telegram-bot.admin.username}")
     private String botAdminUsername;
 
-    @Value("${telegram-bot.admin.password}")
-    private String botAdminPassword;
-
     @Override
     public String getUsername() {
         return userName;
@@ -29,11 +26,6 @@ public class LongPollingTelegramBotConfig implements TelegramBotConfig {
     @Override
     public String getBotToken() {
         return botToken;
-    }
-
-    @Override
-    public String getBotAdminPassword() {
-        return botAdminPassword;
     }
 
     @Override

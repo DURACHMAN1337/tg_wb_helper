@@ -5,7 +5,5 @@ public interface TelegramBotConfig {
 
     String getBotToken();
 
-    String getBotAdminPassword();
-
     String getBotAdminUsername();
 }
