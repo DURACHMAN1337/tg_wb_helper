@@ -32,8 +32,16 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
         if (Callback.FIRST.equals(callbackQuery.getData())) {
             sendMessage = InlineKeyboardMarkupBuilder.create(chatId1)
                     .buildAsSendMessage();
+            StringBuilder sb = new StringBuilder();
+            sb.append(telegramUser.getTelegramId())
+                    .append("\n")
+                    .append(telegramUser.getFirstName())
+                    .append(" ")
+                    .append(telegramUser.getLastName())
+                    .append("\n")
+                    .append(telegramUser.getUsername());
 
-            sendMessage.setText("test text");
+            sendMessage.setText(sb.toString());
             sendMessage.setChatId(chatId1);
 
         }

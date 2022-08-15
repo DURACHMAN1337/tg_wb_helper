@@ -52,7 +52,7 @@ public class TelegramUserService {
     public TelegramUser createAndSaveFrom(User user, Long chatId) {
         TelegramUser telegramUser = new TelegramUser();
 
-        telegramUser.setTelegramId(telegramUser.getTelegramId());
+        telegramUser.setTelegramId(user.getId());
         telegramUser.setUsername(user.getUserName());
         telegramUser.setFirstName(user.getFirstName());
         telegramUser.setLastName(user.getLastName());

@@ -37,6 +37,7 @@ public class RequestHelper {
                         null,
                         String.class)
                 .getBody();
+
         // TODO: 15.08.2022 mapping from json
         return null;
     }
