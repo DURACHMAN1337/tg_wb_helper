@@ -1,11 +1,15 @@
 package com.ftd.telegramhelper.feedback.feedbackchannel;
 
+import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
 import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.telegramuser.TelegramUserService;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.WebApplicationContext;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -15,6 +19,8 @@ public class FeedbackChannelService {
     private final TelegramUserService telegramUserService;
     private final ResponseHelper responseHelper;
     private final FeedbackChannelConfig feedbackChannelConfig;
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
     @Autowired
     public FeedbackChannelService(
@@ -29,27 +35,49 @@ public class FeedbackChannelService {
 
     // TODO: test this
     public void updateFeedback(String replyToMessageId, String message) throws TelegramApiException {
-        responseHelper.replyToMessage(getFeedbackChannelId(), replyToMessageId, message);
+        responseHelper.replyToMessage(feedbackChannelConfig.getChannelId(), replyToMessageId, message);
     }
 
     public Message createFeedback(TelegramUser forUser) throws TelegramApiException {
         Message feedbackMessage = responseHelper.sendMessage(
-                getFeedbackChannelId(),
+                feedbackChannelConfig.getChannelId(),
                 getFeedbackPostTitle(forUser)
         );
-        forUser.setFeedbackMessageId(feedbackMessage.getMessageId().toString());
+        forUser.setFeedbackMessageId(String.valueOf(getMessageIdForLastMessage(feedbackChannelConfig.getChannelChatId())));
         telegramUserService.save(forUser);
 
         return feedbackMessage;
     }
 
-    private String getFeedbackPostTitle(TelegramUser forUser) {
-        return forUser.getTelegramId() + "\n" +                                 // id [row 1]
-                forUser.getFirstName() + " " + forUser.getLastName() +  // hummable name [row 2]
-                "\n" + forUser.getUsername();                           // telegram login [row 3]
+    public Integer getMessageIdForLastMessage(String chatId) {
+        SendMessage sendMessage = SendMessage
+                .builder()
+                .chatId(chatId)
+                .text("test")
+                .build();
+
+        try {
+            LongPollingBot bean = webApplicationContext.getBean(LongPollingBot.class);
+            Message execute = bean.execute(sendMessage);
+            Integer messageId = execute.getMessageId();
+            int res = messageId + 1;
+            DeleteMessage deleteMessage = DeleteMessage.builder()
+                    .chatId(chatId)
+                    .messageId(messageId)
+                    .build();
+            bean.execute(deleteMessage);
+            return res;
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    private String getFeedbackChannelId() throws IllegalStateException {
-        return feedbackChannelConfig.getChannelId();
+    private String getFeedbackPostTitle(TelegramUser forUser) {
+        return forUser.getTelegramId() + "\n" +
+                "Пользователь: " + forUser.getFirstName() + " " + forUser.getLastName() +
+                "\n" + "@" + forUser.getUsername();
     }
+
+
 }

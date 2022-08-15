@@ -5,4 +5,6 @@ public abstract class Callback {
     public static String SECOND = "2";
     public static String THIRD = "3";
     public static String BACK = "back";
+    public static String SUCCESS = "success";
+    public static String DENIED = "denied";
 }

@@ -2,6 +2,7 @@ package com.ftd.telegramhelper.util.response;
 
 import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
 import com.ftd.telegramhelper.message.MessageBundle;
+import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.callback.Callback;
 import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +90,19 @@ public class ResponseHelper {
         );
     }
 
+    public void replyToUserMessage(String chatId,
+                                          String message,
+                                          TelegramUser telegramUser) throws TelegramApiException {
+        SendMessage sendMessage = InlineKeyboardMarkupBuilder.create(chatId, message)
+                .row()
+                .button("OK", Callback.SUCCESS)
+                .button("Cancel", Callback.DENIED)
+                .endRow()
+                .buildAsSendMessage();
+        sendMessage.setReplyToMessageId(Integer.valueOf(telegramUser.getFeedbackMessageId()));
+        applicationContext.getBean(LongPollingBot.class).execute(sendMessage);
+    }
+
     public SendMessage createErrorResponse(CallbackQuery callbackQuery) {
         return SendMessage.builder()
                 .chatId(getChatId(callbackQuery))
@@ -96,8 +110,22 @@ public class ResponseHelper {
                 .build();
     }
 
+    public SendMessage createSuccessMessage(String chatId){
+        return SendMessage.builder()
+                .chatId(chatId)
+                .text(messageBundle.loadMessage("ftd.telegram_helper.message.success"))
+                .build();
+    }
+
+    public SendMessage createDeniedMessage(String chatId){
+        return SendMessage.builder()
+                .chatId(chatId)
+                .text(messageBundle.loadMessage("ftd.telegram_helper.message.failure"))
+                .build();
+    }
+
     public EditMessageText createInstructionMessage(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder.create(chatId, getInstructionText())
+        return InlineKeyboardMarkupBuilder.create(chatId, messageBundle.loadMessage("ftd.telegram_helper.message.details"))
                 .row()
                 .button("Назад", Callback.BACK)
                 .endRow()
@@ -115,15 +143,4 @@ public class ResponseHelper {
         return String.valueOf(callbackQuery.getMessage().getChatId());
     }
 
-    private String getInstructionText() {
-        return "СКлассно, спасибо за твою инициативность!\n" +
-                "Теперь мы ждем скриншот твоего отзыва и с удовольствием подарим тебе 150 руб после того, как прочитаем твои впечатления о товаре Freeedom.\n" +
-                "\n" +
-                "Далее мы подробно расскажем, как сделать скриншот, и наши менеджеры оперативно ответят на твои сообщения!\n" +
-                "\n" +
-                "\n" +
-                "В Личном кабинете WB все оставленные отзывы можно найти в разделе «Профиль»➡️ «Отзывы и вопросы».\n" +
-                "\n" +
-                "❗️ Чтобы вернуться к первому сообщению, жми кнопку \"назад\".";
-    }
 }

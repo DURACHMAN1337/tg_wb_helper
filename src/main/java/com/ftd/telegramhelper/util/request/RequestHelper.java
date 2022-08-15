@@ -1,5 +1,6 @@
 package com.ftd.telegramhelper.util.request;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class RequestHelper {
 
         JSONObject json = new JSONObject(body);
         Object result = json.get("result");
-
+        ObjectMapper objectMapper = new ObjectMapper();
         return null;
     }
 

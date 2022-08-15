@@ -1,5 +1,6 @@
 package com.ftd.telegramhelper.telegramuser;
 
+import com.ftd.telegramhelper.util.state.UserStates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
@@ -57,6 +58,7 @@ public class TelegramUserService {
         telegramUser.setFirstName(user.getFirstName());
         telegramUser.setLastName(user.getLastName());
         telegramUser.setChatId(chatId);
+        telegramUser.setState(UserStates.NEW);
         telegramUser.setId(UUID.randomUUID());
 
         return save(telegramUser);

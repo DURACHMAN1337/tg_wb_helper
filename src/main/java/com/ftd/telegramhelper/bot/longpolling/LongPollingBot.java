@@ -20,6 +20,7 @@ public class LongPollingBot extends TelegramLongPollingBot {
     private final TelegramBotFacade facade;
     private final Logger logger = LoggerFactory.getLogger(LongPollingBot.class);
 
+
     @Autowired
     public LongPollingBot(LongPollingTelegramBotConfig config, TelegramBotFacade facade) {
         this.config = config;

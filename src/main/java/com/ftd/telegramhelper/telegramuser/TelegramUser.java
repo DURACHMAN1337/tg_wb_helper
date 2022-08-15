@@ -1,5 +1,7 @@
 package com.ftd.telegramhelper.telegramuser;
 
+import com.ftd.telegramhelper.util.state.UserStates;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -27,6 +29,9 @@ public class TelegramUser implements Comparable<TelegramUser> {
 
     @Column(name = "feedback_message_id")
     private String feedbackMessageId;
+
+    @Column(name = "state")
+    private UserStates state;
 
     public String getFeedbackMessageId() {
         return feedbackMessageId;
@@ -82,6 +87,14 @@ public class TelegramUser implements Comparable<TelegramUser> {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public UserStates getState() {
+        return state;
+    }
+
+    public void setState(UserStates state) {
+        this.state = state;
     }
 
     @Override
