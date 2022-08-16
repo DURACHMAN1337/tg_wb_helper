@@ -1,16 +1,19 @@
 package com.ftd.telegramhelper.util.keyboard.inline;
 
+import com.ftd.telegramhelper.util.callback.Callback;
 import com.ftd.telegramhelper.util.keyboard.KeyboardMarkupBuilder;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageCaption;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +79,7 @@ public class InlineKeyboardMarkupBuilder implements KeyboardMarkupBuilder {
 
     public InlineKeyboardMarkupBuilder titleRow(@NotNull String title) {
         row();
-        button(title, "fakeCallback");
+        button(title, Callback.FAKE);
         endRow();
         return this;
     }
@@ -89,7 +92,8 @@ public class InlineKeyboardMarkupBuilder implements KeyboardMarkupBuilder {
     }
 
     /**
-     * This method will send *new message*. It's impossible to replace (edit) message (not SendPhoto message) by message with photo
+     * This method will send *new message*.
+     * It's impossible to replace (edit) message (not SendPhoto message) by message with photo
      * @param photo photo
      * @return instance of SendPhoto
      */
@@ -128,6 +132,18 @@ public class InlineKeyboardMarkupBuilder implements KeyboardMarkupBuilder {
         editedMessaged.setReplyMarkup(keyboardMarkup);
         editedMessaged.enableMarkdown(true);
         return editedMessaged;
+    }
+
+    public EditMessageReplyMarkup rebuildAsEditMessageReplyMarkup(
+            int messageId,
+            @Nullable InlineKeyboardMarkup markup
+    ) {
+        EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
+        editMessageReplyMarkup.setReplyMarkup(markup);
+        editMessageReplyMarkup.setChatId(chatId);
+        editMessageReplyMarkup.setMessageId(messageId);
+
+        return editMessageReplyMarkup;
     }
 
     public EditMessageCaption rebuildAsEditMessageCaption(int messageId) {

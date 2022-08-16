@@ -7,4 +7,5 @@ public abstract class Callback {
     public static String BACK = "back";
     public static String SUCCESS = "success";
     public static String DENIED = "denied";
+    public static String FAKE = "fake";
 }

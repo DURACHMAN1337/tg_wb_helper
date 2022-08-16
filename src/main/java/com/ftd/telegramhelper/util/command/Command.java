@@ -1,7 +1,8 @@
 package com.ftd.telegramhelper.util.command;
 
 public enum Command {
-    START("/start");
+    START("/start"),
+    INSTRUCTION("Как работает бот?");
 
     private final String value;
 

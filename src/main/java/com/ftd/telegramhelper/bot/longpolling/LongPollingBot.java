@@ -2,6 +2,8 @@ package com.ftd.telegramhelper.bot.longpolling;
 
 import com.ftd.telegramhelper.bot.facade.TelegramBotFacade;
 import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
+import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
+import com.ftd.telegramhelper.exception.TelegramUserNotExistException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,15 +41,15 @@ public class LongPollingBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        PartialBotApiMethod<?> processedUpdate = facade.processUpdate(update);
         try {
+            PartialBotApiMethod<?> processedUpdate = facade.processUpdate(update);
             if (processedUpdate instanceof SendMessage) {
                 execute(((SendMessage) processedUpdate));
             } else if (processedUpdate instanceof EditMessageText) {
                 execute(((EditMessageText) processedUpdate));
             }
-        } catch (TelegramApiException e) {
-            logger.error("Something goes wrong");
+        } catch (TelegramApiException | TelegramUserNotExistException | IncorrectFeedbackChannelPostException e) {
+            logger.error("Error in #onUpdateReceived method, message: " + e.getMessage());
         }
     }
 }
