@@ -19,18 +19,19 @@ public class FeedbackChannelService {
     private final TelegramUserService telegramUserService;
     private final ResponseHelper responseHelper;
     private final FeedbackChannelConfig feedbackChannelConfig;
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+    private final WebApplicationContext webApplicationContext;
+
 
     @Autowired
     public FeedbackChannelService(
             TelegramUserService telegramUserService,
             ResponseHelper responseHelper,
-            FeedbackChannelConfig feedbackChannelConfig
-    ) {
+            FeedbackChannelConfig feedbackChannelConfig,
+            WebApplicationContext webApplicationContext) {
         this.telegramUserService = telegramUserService;
         this.responseHelper = responseHelper;
         this.feedbackChannelConfig = feedbackChannelConfig;
+        this.webApplicationContext = webApplicationContext;
     }
 
     // TODO: test this
