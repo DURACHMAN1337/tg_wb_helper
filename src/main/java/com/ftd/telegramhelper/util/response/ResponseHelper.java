@@ -70,7 +70,7 @@ public class ResponseHelper {
     public void updateReplyMarkup(String chatId) throws TelegramApiException {
         execute(
                 ReplyKeyboardMarkupBuilder
-                        .create(chatId, getWelcomeMessage())
+                        .create(chatId, Smiles.FIRE.getUnicode() + Smiles.FIRE.getUnicode() + Smiles.FIRE.getUnicode())
                         .row()
                         .button(Command.INSTRUCTION.getValue())
                         .endRow()

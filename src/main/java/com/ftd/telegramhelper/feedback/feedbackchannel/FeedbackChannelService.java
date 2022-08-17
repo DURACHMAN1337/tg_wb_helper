@@ -55,9 +55,13 @@ public class FeedbackChannelService {
     }
 
     private String getFeedbackPostTitle(TelegramUser forUser) {
-        return forUser.getTelegramId() + "\n" +
-                "Пользователь: " + forUser.getFirstName() + " " + forUser.getLastName() +
-                "\n" + "@" + forUser.getUsername();
+        return forUser.getTelegramId() +
+                "\n" +
+                "Пользователь: " +
+                (forUser.getFirstName() == null ? "Empty name" : forUser.getFirstName()) + " " +
+                (forUser.getLastName() == null ? "" : forUser.getLastName()) +
+                "\n" +
+                "@" + forUser.getUsername();
     }
 
 

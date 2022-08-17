@@ -54,6 +54,7 @@ public class MessageHandlerImpl implements MessageHandler {
         if (Command.START.getValue().equals(command)) {
             createTelegramUserIfNotExist(user, chatId);
             responseHelper.updateReplyMarkup(chatIdAsString);
+            return responseHelper.createMainMenu(chatIdAsString);
         } else if (Command.INSTRUCTION.getValue().equals(command)) {
             return responseHelper.createMainMenu(chatIdAsString);
         } else if (isMessageFromFeedbackChat(message)) {

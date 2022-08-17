@@ -26,7 +26,8 @@ public enum Smiles {
     ARROW_RIGHT(":arrow_right:"),
     ARROW_LEFT(":arrow_left:"),
     ARROW_HEADING_UP(":arrow_heading_up:"),
-    BACK(":back:");
+    BACK(":back:"),
+    FIRE(":fire:");
 
     private final String code;
 
