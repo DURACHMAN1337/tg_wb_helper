@@ -6,8 +6,12 @@ plugins {
 }
 
 group = 'com.ftd'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+version = '1.0.0'
+sourceCompatibility = JavaVersion.VERSION_17
+
+bootJar {
+    archiveName = 'telegram_helper.jar'
+}
 
 configurations {
     compileOnly {
