@@ -74,8 +74,10 @@ public class MessageHandlerImpl implements MessageHandler {
                 throw new IncorrectFeedbackChannelPostException();
             } else {
                 TelegramUser telegramUser = telegramUserService.findBy(telegramUserId);
-                telegramUser.setFeedbackMessageId(String.valueOf(message.getMessageId()));
-                telegramUserService.save(telegramUser);
+                if (telegramUser.getFeedbackMessageId() == null) {
+                    telegramUser.setFeedbackMessageId(String.valueOf(message.getMessageId()));
+                    telegramUserService.save(telegramUser);
+                }
                 return;
             }
         }
