@@ -92,7 +92,7 @@ public class MessageHandlerImpl implements MessageHandler {
         if (existingUser != null) {
             responseHelper.sendMessage(
                     String.valueOf(existingUser.getChatId()),
-                    "Message from manager: " + message.getText()
+                    message.getText()
             );
         }
     }
