@@ -8,7 +8,7 @@ currentLocalDirPath="${PWD}"
 # remote machine credentials
 remoteMachineAddress="158.160.9.88"
 remoteMachineSshUser="telegramhelper"
-remoteMachineSshPassword="123"
+remoteMachineSshPassword="telegramhelperpass"
 
 # local path to jar
 localPathToJar="$currentLocalDirPath/build/libs/telegram_helper.jar"
