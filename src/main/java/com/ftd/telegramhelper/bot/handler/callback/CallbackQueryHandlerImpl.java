@@ -11,6 +11,7 @@ import com.ftd.telegramhelper.util.response.ResponseHelper;
 import com.ftd.telegramhelper.util.state.UserStates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -38,7 +39,8 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
     }
 
     @Override
-    public PartialBotApiMethod<?> processCallbackQuery(CallbackQuery callbackQuery) throws TelegramApiException, TelegramUserNotExistException, IncorrectFeedbackChannelPostException {
+    public PartialBotApiMethod<?> processCallbackQuery(CallbackQuery callbackQuery)
+            throws TelegramApiException, TelegramUserNotExistException, IncorrectFeedbackChannelPostException {
         TelegramUser telegramUser = getSuitableTelegramUser(callbackQuery, callbackQuery.getMessage());
         Integer messageId = callbackQuery.getMessage().getMessageId();
         String chatId = String.valueOf(telegramUser.getChatId());
@@ -46,23 +48,28 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
 
         if (Callback.FIRST.equals(callbackData)) {
             return processFirstCallback(callbackQuery, telegramUser, chatId, messageId);
+
         } else if (Callback.SECOND.equals(callbackData)) {
             setSuitableState(UserStates.IN_PROGRESS, telegramUser);
             return responseHelper.createInfoPage(chatId, messageId);
+
         } else if (Callback.THIRD.equals(callbackData)) {
-            setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
-            return responseHelper.createHelpPage(chatId, messageId);
+            return processThirdCallback(callbackQuery, telegramUser, chatId, messageId);
+
         } else if (Callback.DENIED.equals(callbackData)) {
             disableManagerActions(callbackQuery.getMessage(), false);
             setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
             return responseHelper.createDeniedMessage(chatId);
+
         } else if (Callback.SUCCESS.equals(callbackData)) {
             disableManagerActions(callbackQuery.getMessage(), true);
             setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
             return responseHelper.createSuccessMessage(chatId);
+
         } else if (Callback.BACK.equals(callbackData)) {
             setSuitableState(UserStates.IN_PROGRESS, telegramUser);
             return responseHelper.recreateMainMenu(chatId, messageId);
+
         } else {
             responseHelper.handleError(Long.valueOf(chatId));
             return null;
@@ -84,11 +91,32 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
             int messageId
     ) {
         try {
-            feedbackService.updateFeedback(telegramUser, "");
+            createFeedbackIfNeeded(telegramUser);
             setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
             return responseHelper.createInstructionMessage(chatId, messageId);
         } catch (Exception e) {
             return responseHelper.createErrorResponse(callbackQuery);
+        }
+    }
+
+    private PartialBotApiMethod<?> processThirdCallback(
+            CallbackQuery callbackQuery,
+            TelegramUser telegramUser,
+            String chatId,
+            Integer messageId
+    ) {
+        try {
+            createFeedbackIfNeeded(telegramUser);
+            setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
+            return responseHelper.createHelpPage(chatId, messageId);
+        } catch (Exception e) {
+            return responseHelper.createErrorResponse(callbackQuery);
+        }
+    }
+
+    private void createFeedbackIfNeeded(TelegramUser telegramUser) throws TelegramApiException {
+        if (!StringUtils.hasText(telegramUser.getFeedbackMessageId())) {
+            feedbackService.createFeedback(telegramUser);
         }
     }
 
@@ -97,7 +125,8 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
         telegramUserService.save(forUser);
     }
 
-    private TelegramUser getSuitableTelegramUser(CallbackQuery callbackQuery, Message message) throws IncorrectFeedbackChannelPostException, TelegramUserNotExistException {
+    private TelegramUser getSuitableTelegramUser(CallbackQuery callbackQuery, Message message)
+            throws IncorrectFeedbackChannelPostException, TelegramUserNotExistException {
         if (callbackQuery.getData().equals(Callback.SUCCESS) || callbackQuery.getData().equals(Callback.DENIED)) {
             TelegramUser telegramUser;
             Long telegramUserIdFromComment = getTelegramUserIdFromComment(message);

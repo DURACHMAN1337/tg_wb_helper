@@ -1,7 +1,7 @@
 package com.ftd.telegramhelper.bot.handler.message;
 
-import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
+import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.feedback.FeedbackService;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.telegramuser.TelegramUserService;
@@ -13,6 +13,7 @@ import com.ftd.telegramhelper.util.state.UserStates;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -127,7 +128,8 @@ public class MessageHandlerImpl implements MessageHandler {
     }
 
     private boolean isMessageFromFeedbackChat(Message message) {
-        return message.getChat().getUserName().equals(
+        String chatName = message.getChat().getUserName();
+        return StringUtils.hasText(chatName) && chatName.equals(
                 feedbackChannelConfig.getChannelChatId().replace("@", "")
         );
     }
