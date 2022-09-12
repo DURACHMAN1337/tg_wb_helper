@@ -10,6 +10,7 @@ import com.ftd.telegramhelper.util.message.MessageUtils;
 import com.ftd.telegramhelper.util.request.RequestHelper;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
 import com.ftd.telegramhelper.util.state.UserStates;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,8 @@ import static com.ftd.telegramhelper.util.message.MessageUtils.isImage;
 @Component
 public class MessageHandlerImpl implements MessageHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(MessageHandlerImpl.class);
+
     private final TelegramUserService telegramUserService;
     private final ResponseHelper responseHelper;
     private final FeedbackChannelConfig feedbackChannelConfig;
@@ -36,8 +39,7 @@ public class MessageHandlerImpl implements MessageHandler {
             ResponseHelper responseHelper,
             FeedbackChannelConfig feedbackChannelConfig,
             FeedbackService feedbackService,
-            RequestHelper requestHelper
-    ) {
+            RequestHelper requestHelper) {
         this.telegramUserService = telegramUserService;
         this.responseHelper = responseHelper;
         this.feedbackChannelConfig = feedbackChannelConfig;
@@ -46,7 +48,8 @@ public class MessageHandlerImpl implements MessageHandler {
     }
 
     @Override
-    public BotApiMethod<?> processMessage(Message message) throws TelegramApiException, IncorrectFeedbackChannelPostException {
+    public BotApiMethod<?> processMessage(Message message)
+            throws TelegramApiException, IncorrectFeedbackChannelPostException {
         Long chatId = message.getChatId();
         String chatIdAsString = String.valueOf(chatId);
         String command = message.getText();
@@ -67,7 +70,8 @@ public class MessageHandlerImpl implements MessageHandler {
         return null;
     }
 
-    private void processMessageFromFeedbackChannel(Message message) throws TelegramApiException, IncorrectFeedbackChannelPostException {
+    private void processMessageFromFeedbackChannel(Message message)
+            throws TelegramApiException, IncorrectFeedbackChannelPostException {
         User messageFrom = message.getFrom();
         Long telegramUserId = MessageUtils.getTelegramUserIdFromComment(message);
         if (isTelegramBot(messageFrom)) {
@@ -105,9 +109,9 @@ public class MessageHandlerImpl implements MessageHandler {
         return user.getUserName() == null && user.getFirstName().equals("Telegram"); //&& user.getId() == 777000L;
     }
 
-    private void updateFeedbackFor(User user, Message message) throws TelegramApiException, IncorrectFeedbackChannelPostException {
+    private void updateFeedbackFor(User user, Message message) throws TelegramApiException {
         TelegramUser telegramUser = telegramUserService.findBy(user.getId());
-        if (telegramUser != null && telegramUser.getState().equals(UserStates.CAN_SEND_MESSAGES)) {
+        if (telegramUser != null && UserStates.CAN_SEND_MESSAGES.equals(telegramUser.getState())) {
             if (message.hasPhoto()) {
                 feedbackService.updateFeedback(telegramUser, requestHelper.getPhotoFrom(message), false);
             }
@@ -120,10 +124,13 @@ public class MessageHandlerImpl implements MessageHandler {
                         "Message from user: " + message.getText()
                 );
             }
+            responseHelper.sendMessage(
+                    String.valueOf(message.getChatId()),
+                    "[INFO]: Ваше сообщение успешно отправлено"
+            );
         } else {
             responseHelper.handleError(message.getChatId());
-            LoggerFactory.getLogger(MessageHandlerImpl.class)
-                    .info(user + " does not have the required status to send the message");
+            logger.info(user + " does not have the required status to send the message");
         }
     }
 

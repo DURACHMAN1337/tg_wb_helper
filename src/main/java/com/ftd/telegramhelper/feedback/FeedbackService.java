@@ -3,6 +3,8 @@ package com.ftd.telegramhelper.feedback;
 import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -17,6 +19,7 @@ public class FeedbackService {
 
     private final ResponseHelper responseHelper;
     private final FeedbackChannelConfig feedbackChannelConfig;
+    private static final Logger logger = LoggerFactory.getLogger(FeedbackService.class);
 
     @Autowired
     public FeedbackService(ResponseHelper responseHelper, FeedbackChannelConfig feedbackChannelConfig) {
@@ -33,6 +36,7 @@ public class FeedbackService {
                     feedbackMessageId,
                     message
             );
+            logger.info("Feedback has been updated for user " + forUser);
         } else if (!feedbackAlreadyExist) {
             throw new IllegalStateException("Feedback post not exist!");
         }
@@ -54,6 +58,7 @@ public class FeedbackService {
                     responseHelper.createAcceptButton(),
                     responseHelper.createRejectButton()
             );
+            logger.info("Feedback has been updated for user " + forUser);
         } else if (!feedbackAlreadyExist) {
             throw new IllegalStateException("Feedback post not exist!");
         }
@@ -64,6 +69,7 @@ public class FeedbackService {
                 feedbackChannelConfig.getChannelId(),
                 getFeedbackPostTitle(forUser)
         );
+        logger.info("Feedback has been created for user " + forUser);
     }
 
     private String getFeedbackPostTitle(TelegramUser forUser) {
