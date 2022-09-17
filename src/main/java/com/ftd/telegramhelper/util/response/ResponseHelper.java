@@ -57,12 +57,12 @@ public class ResponseHelper {
     }
 
     public SendMessage createMainMenu(String chatId) {
-        return InlineKeyboardMarkupBuilder
+        return ReplyKeyboardMarkupBuilder
                 .create(String.valueOf(chatId), getWelcomeMessage())
                 .row()
-                .button(Smiles.DIGIT_ONE.getUnicode(), Callback.FIRST)
-                .button(Smiles.DIGIT_TWO.getUnicode(), Callback.SECOND)
-                .button(Smiles.DIGIT_THREE.getUnicode(), Callback.THIRD)
+                .button(messageBundle.loadMessage("ftd.telegram_helper.button.FAQ.caption"))
+                .button(messageBundle.loadMessage("ftd.telegram_helper.button.takeRublesButton"))
+                .button(messageBundle.loadMessage("ftd.telegram_helper.button.HelpButton.caption"))
                 .endRow()
                 .buildAsSendMessage();
     }
