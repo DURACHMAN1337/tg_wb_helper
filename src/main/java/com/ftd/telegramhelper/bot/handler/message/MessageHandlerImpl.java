@@ -57,10 +57,13 @@ public class MessageHandlerImpl implements MessageHandler {
 
         if (Command.START.getValue().equals(command)) {
             createTelegramUserIfNotExist(user, chatId);
-            responseHelper.updateReplyMarkup(chatIdAsString);
             return responseHelper.createMainMenu(chatIdAsString);
-        } else if (Command.INSTRUCTION.getValue().equals(command)) {
-            return responseHelper.createMainMenu(chatIdAsString);
+        } else if (Command.TAKE_RUBLES.getValue().equals(command)) {
+            // TODO: 17.09.2022 сюда перекинуть логику из колбэка 1 и 2
+            return responseHelper.createTakeRublesMenu(chatIdAsString);
+        } else if (Command.HELP.getValue().equals(command)) {
+            // TODO: 17.09.2022 сюда перекинть логику из колбэка 3
+            return responseHelper.createHelpPage(chatIdAsString, message.getMessageId());
         } else if (isMessageFromFeedbackChat(message)) {
             processMessageFromFeedbackChannel(message);
         } else {

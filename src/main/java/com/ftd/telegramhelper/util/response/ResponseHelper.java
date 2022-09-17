@@ -60,12 +60,27 @@ public class ResponseHelper {
         return ReplyKeyboardMarkupBuilder
                 .create(String.valueOf(chatId), getWelcomeMessage())
                 .row()
-                .button(messageBundle.loadMessage("ftd.telegram_helper.button.FAQ.caption"))
-                .button(messageBundle.loadMessage("ftd.telegram_helper.button.takeRublesButton"))
-                .button(messageBundle.loadMessage("ftd.telegram_helper.button.HelpButton.caption"))
+                .button(Command.FAQ.getValue())
+                .endRow()
+                .row()
+                .button(Command.TAKE_RUBLES.getValue())
+                .endRow()
+                .row()
+                .button(Command.HELP.getValue())
                 .endRow()
                 .buildAsSendMessage();
     }
+
+    public SendMessage createTakeRublesMenu(String chatId) {
+        return InlineKeyboardMarkupBuilder
+                .create(String.valueOf(chatId), getWelcomeMessage())
+                .row()
+                .button(Smiles.DIGIT_ONE.getUnicode(), Callback.FIRST)
+                .button(Smiles.DIGIT_TWO.getUnicode(), Callback.SECOND)
+                .endRow()
+                .buildAsSendMessage();
+    }
+
 
     public void updateReplyMarkup(String chatId) throws TelegramApiException {
         execute(
@@ -187,6 +202,13 @@ public class ResponseHelper {
         return SendMessage
                 .builder()
                 .chatId(getChatId(callbackQuery))
+                .text(messageBundle.loadMessage("ftd.telegram_helper.message.error"))
+                .build();
+    }
+    public SendMessage createErrorResponse(String chatId) {
+        return SendMessage
+                .builder()
+                .chatId(chatId)
                 .text(messageBundle.loadMessage("ftd.telegram_helper.message.error"))
                 .build();
     }
