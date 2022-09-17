@@ -1,0 +1,59 @@
+name: deployment-workflow
+on:
+  workflow_dispatch:
+    inputs:
+      remoteMachineAddress:
+        type: string
+        description: 'Remote machine public ipV4'
+        required: true
+      remoteMachineSshUser:
+        type: string
+        description: 'Remote machine ssh user'
+        required: true
+      remoteMachineSshPassword:
+        type: string
+        description: 'Remote machine ssh user password'
+        required: true
+      telegramBotToken:
+        type: string
+        description: 'Telegram bot token'
+        required: true
+      telegramBotAdminUsername:
+        type: string
+        description: 'Telegram bot admin username (starts with @)'
+        required: true
+      feedbackChannelId:
+        type: string
+        description: 'Feedback channel id'
+        required: true
+      feedbackChannelChatId:
+        type: string
+        description: 'Feedback channel chat id'
+        required: true
+      databasePort:
+        type: string
+        description: 'Database port'
+        required: true
+        default: "5432"
+      applicationPort:
+        type: string
+        description: 'Application port'
+        required: true
+        default: "8080"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install sshpass
+        run: sudo apt install sshpass
+      - name: Set deploy.sh file executable
+        run: chmod +x ./deploy.sh
+      - name: Execute deploy.sh file
+        run: ./deploy.sh ${{ github.event.inputs.remoteMachineAddress }} ${{ github.event.inputs.remoteMachineSshUser }} ${{ github.event.inputs.remoteMachineSshPassword }} ${{ github.event.inputs.databasePort }} ${{ github.event.inputs.applicationPort }} ${{ github.event.inputs.telegramBotToken }} ${{ github.event.inputs.telegramBotAdminUsername }} ${{ github.event.inputs.feedbackChannelId }} ${{ github.event.inputs.feedbackChannelChatId }}
