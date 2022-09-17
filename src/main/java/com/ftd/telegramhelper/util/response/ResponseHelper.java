@@ -1,15 +1,22 @@
 package com.ftd.telegramhelper.util.response;
 
 import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
+import com.ftd.telegramhelper.feedback.FeedbackService;
 import com.ftd.telegramhelper.message.MessageBundle;
+import com.ftd.telegramhelper.telegramuser.TelegramUser;
+import com.ftd.telegramhelper.telegramuser.TelegramUserService;
 import com.ftd.telegramhelper.util.callback.Callback;
 import com.ftd.telegramhelper.util.command.Command;
+import com.ftd.telegramhelper.util.command.Commands;
+import com.ftd.telegramhelper.util.faq.FaqInfos;
 import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
 import com.ftd.telegramhelper.util.keyboard.reply.ReplyKeyboardMarkupBuilder;
 import com.ftd.telegramhelper.util.message.Smiles;
+import com.ftd.telegramhelper.util.state.UserStates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
@@ -35,11 +42,17 @@ public class ResponseHelper {
 
     private final ApplicationContext applicationContext;
     private final MessageBundle messageBundle;
+    private final Commands commands;
 
     @Autowired
-    public ResponseHelper(ApplicationContext applicationContext, MessageBundle messageBundle) {
+    public ResponseHelper(
+            ApplicationContext applicationContext,
+            MessageBundle messageBundle,
+            Commands commands
+    ) {
         this.applicationContext = applicationContext;
         this.messageBundle = messageBundle;
+        this.commands = commands;
     }
 
     public <T extends Serializable, Method extends BotApiMethod<T>> void execute(
@@ -56,41 +69,18 @@ public class ResponseHelper {
         getBot().execute(sendDocument);
     }
 
-    public SendMessage createMainMenu(String chatId) {
+    public SendMessage createMainMenu(String chatId, boolean sendWelcomeMessage) {
         return ReplyKeyboardMarkupBuilder
-                .create(String.valueOf(chatId), getWelcomeMessage())
+                .create(
+                        String.valueOf(chatId),
+                        sendWelcomeMessage ? getWelcomeMessage() : "Меню"
+                )
                 .row()
-                .button(Command.FAQ.getValue())
-                .endRow()
-                .row()
-                .button(Command.TAKE_RUBLES.getValue())
-                .endRow()
-                .row()
-                .button(Command.HELP.getValue())
-                .endRow()
-                .buildAsSendMessage();
-    }
-
-    public SendMessage createTakeRublesMenu(String chatId) {
-        return InlineKeyboardMarkupBuilder
-                .create(String.valueOf(chatId), getWelcomeMessage())
-                .row()
-                .button(Smiles.DIGIT_ONE.getUnicode(), Callback.FIRST)
-                .button(Smiles.DIGIT_TWO.getUnicode(), Callback.SECOND)
+                .button(messageBundle.loadMessage("ftd.telegram_helper.command.faq.vaacumator"))
+                .button(messageBundle.loadMessage("ftd.telegram_helper.command.money"))
+                .button(messageBundle.loadMessage("ftd.telegram_helper.command.help"))
                 .endRow()
                 .buildAsSendMessage();
-    }
-
-
-    public void updateReplyMarkup(String chatId) throws TelegramApiException {
-        execute(
-                ReplyKeyboardMarkupBuilder
-                        .create(chatId, Smiles.FIRE.getUnicode() + Smiles.FIRE.getUnicode() + Smiles.FIRE.getUnicode())
-                        .row()
-                        .button(Command.INSTRUCTION.getValue())
-                        .endRow()
-                        .buildAsSendMessage()
-        );
     }
 
     public EditMessageText recreateMainMenu(String chatId, int messageId) {
@@ -102,6 +92,122 @@ public class ResponseHelper {
                 .button(Smiles.DIGIT_THREE.getUnicode(), Callback.THIRD)
                 .endRow()
                 .rebuildAsEditMessageText(messageId);
+    }
+
+    public SendMessage updateReplyKeyboardMarkup(TelegramUser telegramUser, String chatId, Command command) throws TelegramApiException {
+        if (commands.getKnownCommands().contains(command)) {
+            // start
+            if (command.equals(commands.getStartCommand())) {
+                setSuitableState(UserStates.NEW, telegramUser);
+                return createMainMenu(chatId, true);
+            }
+
+            // vaacumator faq
+            if (command.equals(commands.getVaacumatorFaqCommand())) {
+                setSuitableState(UserStates.READ_FAQ_VAACUMATOR, telegramUser);
+                return processVaacumatorFaqCommand(chatId);
+            }
+
+            // vaacumator faq step
+            if (UserStates.READ_FAQ_VAACUMATOR.equals(telegramUser.getState())
+                    && commands.getVaacumatorFaqStepCommands().contains(command)) {
+                return processVaacumatorFaqStepCommand(chatId, command);
+            }
+
+            // money
+            if (command.equals(commands.getMoneyCommand())) {
+                try {
+                    createFeedbackIfNeeded(telegramUser);
+                    setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
+                    return processMoneyCommand(chatId);
+                } catch (Exception e) {
+                    return createErrorResponse(createFakeCallbackQuery(Long.valueOf(chatId)));
+                }
+            }
+
+            // help
+            if (command.equals(commands.getHelpCommand())) {
+                try {
+                    createFeedbackIfNeeded(telegramUser);
+                    setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
+                    return processHelpCommand(chatId);
+                } catch (Exception e) {
+                    return createErrorResponse(createFakeCallbackQuery(Long.valueOf(chatId)));
+                }
+            }
+
+            // main_menu
+            if (command.equals(commands.getMainMenuCommand())) {
+                setSuitableState(UserStates.IN_PROGRESS, telegramUser);
+                return createMainMenu(chatId, false);
+            }
+
+            // stop chatting
+            if (command.equals(commands.getStopChattingCommand())) {
+                setSuitableState(UserStates.IN_PROGRESS, telegramUser);
+                sendMessage(chatId, "Вы вышли из режима общения");
+                return createMainMenu(chatId, false);
+            }
+
+        }
+
+        throw new RuntimeException("Unexpected command has been detected [" + command + "]");
+    }
+
+    private void setSuitableState(UserStates state, TelegramUser forUser) {
+        forUser.setState(state);
+        applicationContext.getBean(TelegramUserService.class).save(forUser);
+    }
+
+    private void createFeedbackIfNeeded(TelegramUser telegramUser) throws TelegramApiException {
+        if (!StringUtils.hasText(telegramUser.getFeedbackMessageId())) {
+            applicationContext.getBean(FeedbackService.class).createFeedback(telegramUser);
+        }
+    }
+
+    private SendMessage processVaacumatorFaqStepCommand(String chatId, Command command) throws TelegramApiException {
+        for (int stepNumber = 1; stepNumber <= commands.getVaacumatorFaqStepCommands().size(); stepNumber++) {
+            if (command.equals(commands.getVaacumatorFaqStepCommand(stepNumber))) {
+                execute(
+                        SendPhoto
+                                .builder()
+                                .chatId(chatId)
+                                .photo(
+                                        new InputFile()
+                                                .setMedia(
+                                                        FaqInfos.VaacumatorFaqInfos.StepImages.loadImage(stepNumber),
+                                                        "vaacumator-image-" + stepNumber)
+                                )
+                                .build()
+                );
+                return updateVaacumatorFaqStepReply(chatId, stepNumber);
+            }
+        }
+        throw new RuntimeException("Unexpected faq step has been detected");
+    }
+
+    private SendMessage updateVaacumatorFaqStepReply(String chatId, int stepNumber) {
+        return ReplyKeyboardMarkupBuilder
+                .create(
+                        String.valueOf(chatId),
+                        messageBundle.loadMessage(
+                                FaqInfos.VaacumatorFaqInfos.KNOWN_FAQ_MESSAGES_KEYS.get(stepNumber - 1)
+                        )
+                )
+                .row()
+                .button(commands.getVaacumatorFaqStepCommand(1).getMessage())
+                .button(commands.getVaacumatorFaqStepCommand(2).getMessage())
+                .button(commands.getVaacumatorFaqStepCommand(3).getMessage())
+                .button(commands.getVaacumatorFaqStepCommand(4).getMessage())
+                .endRow()
+                .row()
+                .button(commands.getMainMenuCommand().getMessage())
+                .endRow()
+                .buildAsSendMessage();
+    }
+
+    private SendMessage processVaacumatorFaqCommand(String chatId) {
+        return updateVaacumatorFaqStepReply(chatId, 1);
     }
 
     public EditMessageText createInfoPage(String chatId, int messageId) {
@@ -120,6 +226,24 @@ public class ResponseHelper {
                 .button(createBackButton())
                 .endRow()
                 .rebuildAsEditMessageText(messageId);
+    }
+
+    public SendMessage processHelpCommand(String chatId) {
+        return ReplyKeyboardMarkupBuilder
+                .create(chatId, getHelpMessage())
+                .row()
+                .button(commands.getStopChattingCommand().getMessage())
+                .endRow()
+                .buildAsSendMessage();
+    }
+
+    public SendMessage processMoneyCommand(String chatId) {
+        return ReplyKeyboardMarkupBuilder
+                .create(chatId, getInfoMessage())
+                .row()
+                .button(commands.getStopChattingCommand().getMessage())
+                .endRow()
+                .buildAsSendMessage();
     }
 
     public Message sendMessage(String chatId, String message) throws TelegramApiException {
@@ -205,13 +329,6 @@ public class ResponseHelper {
                 .text(messageBundle.loadMessage("ftd.telegram_helper.message.error"))
                 .build();
     }
-    public SendMessage createErrorResponse(String chatId) {
-        return SendMessage
-                .builder()
-                .chatId(chatId)
-                .text(messageBundle.loadMessage("ftd.telegram_helper.message.error"))
-                .build();
-    }
 
     public SendMessage createSuccessMessage(String chatId) {
         return SendMessage
@@ -243,19 +360,11 @@ public class ResponseHelper {
     }
 
     private String getWelcomeMessage() {
-        return String.format(
-                messageBundle.loadMessage("ftd.telegram_helper.message.welcome"),
-                Smiles.DIGIT_ONE.getUnicode(), Smiles.DIGIT_TWO.getUnicode(), Smiles.DIGIT_THREE.getUnicode()
-        );
+        return messageBundle.loadMessage("ftd.telegram_helper.message.welcome");
     }
 
     private String getInfoMessage() {
-        return String.format(
-                messageBundle.loadMessage("ftd.telegram_helper.message.info"),
-                Smiles.DIGIT_ONE.getUnicode(), Smiles.DIGIT_TWO.getUnicode(), Smiles.DIGIT_THREE.getUnicode(),
-                Smiles.DIGIT_FOUR.getUnicode(), Smiles.DIGIT_FIVE.getUnicode(), Smiles.DIGIT_SIX.getUnicode(),
-                Smiles.DIGIT_SEVEN.getUnicode()
-        );
+        return messageBundle.loadMessage("ftd.telegram_helper.message.info");
     }
 
     private String getHelpMessage() {

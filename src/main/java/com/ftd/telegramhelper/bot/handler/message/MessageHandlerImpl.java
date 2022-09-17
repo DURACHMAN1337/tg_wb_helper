@@ -6,6 +6,7 @@ import com.ftd.telegramhelper.feedback.FeedbackService;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.telegramuser.TelegramUserService;
 import com.ftd.telegramhelper.util.command.Command;
+import com.ftd.telegramhelper.util.command.Commands;
 import com.ftd.telegramhelper.util.message.MessageUtils;
 import com.ftd.telegramhelper.util.request.RequestHelper;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
@@ -32,6 +33,7 @@ public class MessageHandlerImpl implements MessageHandler {
     private final FeedbackChannelConfig feedbackChannelConfig;
     private final FeedbackService feedbackService;
     private final RequestHelper requestHelper;
+    private final Commands commands;
 
     @Autowired
     public MessageHandlerImpl(
@@ -39,12 +41,13 @@ public class MessageHandlerImpl implements MessageHandler {
             ResponseHelper responseHelper,
             FeedbackChannelConfig feedbackChannelConfig,
             FeedbackService feedbackService,
-            RequestHelper requestHelper) {
+            RequestHelper requestHelper, Commands commands) {
         this.telegramUserService = telegramUserService;
         this.responseHelper = responseHelper;
         this.feedbackChannelConfig = feedbackChannelConfig;
         this.feedbackService = feedbackService;
         this.requestHelper = requestHelper;
+        this.commands = commands;
     }
 
     @Override
@@ -52,18 +55,18 @@ public class MessageHandlerImpl implements MessageHandler {
             throws TelegramApiException, IncorrectFeedbackChannelPostException {
         Long chatId = message.getChatId();
         String chatIdAsString = String.valueOf(chatId);
-        String command = message.getText();
+        Command command = Command.create(message.getText());
         User user = message.getFrom();
 
-        if (Command.START.getValue().equals(command)) {
-            createTelegramUserIfNotExist(user, chatId);
-            return responseHelper.createMainMenu(chatIdAsString);
-        } else if (Command.TAKE_RUBLES.getValue().equals(command)) {
-            // TODO: 17.09.2022 сюда перекинуть логику из колбэка 1 и 2
-            return responseHelper.createTakeRublesMenu(chatIdAsString);
-        } else if (Command.HELP.getValue().equals(command)) {
-            // TODO: 17.09.2022 сюда перекинть логику из колбэка 3
-            return responseHelper.createHelpPage(chatIdAsString, message.getMessageId());
+        if (commands.getStartCommand().equals(command)) {
+            getOrCreateTelegramUser(user, chatId);
+            return responseHelper.createMainMenu(chatIdAsString, true);
+        } else if (commands.getKnownCommands().contains(command)) {
+            return responseHelper.updateReplyKeyboardMarkup(
+                    getOrCreateTelegramUser(user, chatId),
+                    chatIdAsString,
+                    command
+            );
         } else if (isMessageFromFeedbackChat(message)) {
             processMessageFromFeedbackChannel(message);
         } else {
@@ -144,10 +147,10 @@ public class MessageHandlerImpl implements MessageHandler {
         );
     }
 
-    private void createTelegramUserIfNotExist(User user, Long chatId) {
+    private TelegramUser getOrCreateTelegramUser(User user, Long chatId) {
         TelegramUser existingUser = telegramUserService.findBy(user.getId());
-        if (existingUser == null) {
-            telegramUserService.createAndSaveFrom(user, chatId);
-        }
+        return existingUser == null
+                ? telegramUserService.createAndSaveFrom(user, chatId)
+                : existingUser;
     }
 }

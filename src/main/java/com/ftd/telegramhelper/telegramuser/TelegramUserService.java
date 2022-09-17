@@ -30,7 +30,7 @@ public class TelegramUserService {
         telegramUserRepository.save(telegramUser);
     }
 
-    public void createAndSaveFrom(User user, Long chatId) {
+    public TelegramUser createAndSaveFrom(User user, Long chatId) {
         TelegramUser telegramUser = new TelegramUser();
 
         telegramUser.setTelegramId(user.getId());
@@ -42,5 +42,7 @@ public class TelegramUserService {
         telegramUser.setId(UUID.randomUUID());
 
         save(telegramUser);
+
+        return telegramUser;
     }
 }

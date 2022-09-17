@@ -1,24 +1,34 @@
 package com.ftd.telegramhelper.util.command;
 
-public enum Command {
-    START("/start"),
-    INSTRUCTION("Как работает бот?"),
 
-    TAKE_RUBLES("Получить 150 рублей"),
+public final class Command {
 
-    FAQ("Как пользоваться вакууматором"),
-
-    HELP("Связаться с поддержкой");
-
-    private final String value;
-
-    Command(String value) {
-        this.value = value;
+    public static Command create(String value) {
+        return new Command(value);
     }
 
-    public String getValue() {
-        return value;
+    private final String message;
+
+    private Command(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return this.message;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Command command = (Command) o;
+
+        return getMessage().equals(command.getMessage());
+    }
+
+    @Override
+    public int hashCode() {
+        return getMessage().hashCode();
     }
 }
-
-
