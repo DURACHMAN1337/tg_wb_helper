@@ -1,10 +1,10 @@
 package com.ftd.telegramhelper.bot.handler.message;
 
 import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public interface MessageHandler {
-    BotApiMethod<?> processMessage(Message message) throws TelegramApiException, IncorrectFeedbackChannelPostException;
+    PartialBotApiMethod<?> processMessage(Message message) throws TelegramApiException, IncorrectFeedbackChannelPostException;
 }

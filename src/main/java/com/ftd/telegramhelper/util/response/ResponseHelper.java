@@ -9,6 +9,8 @@ import com.ftd.telegramhelper.util.callback.Callback;
 import com.ftd.telegramhelper.util.command.Command;
 import com.ftd.telegramhelper.util.command.Commands;
 import com.ftd.telegramhelper.util.faq.FaqInfos;
+import com.ftd.telegramhelper.util.faq.FaqInfos.VaacumatorFaqInfos;
+import com.ftd.telegramhelper.util.faq.KnownFaq;
 import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
 import com.ftd.telegramhelper.util.keyboard.reply.ReplyKeyboardMarkupBuilder;
 import com.ftd.telegramhelper.util.message.Smiles;
@@ -22,7 +24,7 @@ import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -75,26 +77,23 @@ public class ResponseHelper {
                         String.valueOf(chatId),
                         sendWelcomeMessage ? getWelcomeMessage() : "Меню"
                 )
+
                 .row()
-                .button(messageBundle.loadMessage("ftd.telegram_helper.command.faq.vaacumator"))
                 .button(messageBundle.loadMessage("ftd.telegram_helper.command.money"))
+                .endRow()
+
+                .row()
                 .button(messageBundle.loadMessage("ftd.telegram_helper.command.help"))
                 .endRow()
+
+                .row()
+                .button(messageBundle.loadMessage("ftd.telegram_helper.command.faq.vaacumator"))
+                .endRow()
+
                 .buildAsSendMessage();
     }
 
-    public EditMessageText recreateMainMenu(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder
-                .create(String.valueOf(chatId), getWelcomeMessage())
-                .row()
-                .button(Smiles.DIGIT_ONE.getUnicode(), Callback.FIRST)
-                .button(Smiles.DIGIT_TWO.getUnicode(), Callback.SECOND)
-                .button(Smiles.DIGIT_THREE.getUnicode(), Callback.THIRD)
-                .endRow()
-                .rebuildAsEditMessageText(messageId);
-    }
-
-    public SendMessage updateReplyKeyboardMarkup(TelegramUser telegramUser, String chatId, Command command) throws TelegramApiException {
+    public PartialBotApiMethod<?> updateReplyKeyboardMarkup(TelegramUser telegramUser, String chatId, Command command) throws TelegramApiException {
         if (commands.getKnownCommands().contains(command)) {
             // start
             if (command.equals(commands.getStartCommand())) {
@@ -103,22 +102,16 @@ public class ResponseHelper {
             }
 
             // vaacumator faq
-            if (command.equals(commands.getVaacumatorFaqCommand())) {
-                setSuitableState(UserStates.READ_FAQ_VAACUMATOR, telegramUser);
-                return processVaacumatorFaqCommand(chatId);
-            }
-
-            // vaacumator faq step
-            if (UserStates.READ_FAQ_VAACUMATOR.equals(telegramUser.getState())
-                    && commands.getVaacumatorFaqStepCommands().contains(command)) {
-                return processVaacumatorFaqStepCommand(chatId, command);
+            if (commands.getKnownFaqCommands().contains(command)) {
+                setSuitableState(UserStates.READ_FAQ, telegramUser);
+                return processFaqCommand(chatId, command);
             }
 
             // money
             if (command.equals(commands.getMoneyCommand())) {
                 try {
                     createFeedbackIfNeeded(telegramUser);
-                    setSuitableState(UserStates.CAN_SEND_MESSAGES, telegramUser);
+                    setSuitableState(UserStates.IN_MENU, telegramUser);
                     return processMoneyCommand(chatId);
                 } catch (Exception e) {
                     return createErrorResponse(createFakeCallbackQuery(Long.valueOf(chatId)));
@@ -138,13 +131,13 @@ public class ResponseHelper {
 
             // main_menu
             if (command.equals(commands.getMainMenuCommand())) {
-                setSuitableState(UserStates.IN_PROGRESS, telegramUser);
+                setSuitableState(UserStates.IN_MENU, telegramUser);
                 return createMainMenu(chatId, false);
             }
 
             // stop chatting
             if (command.equals(commands.getStopChattingCommand())) {
-                setSuitableState(UserStates.IN_PROGRESS, telegramUser);
+                setSuitableState(UserStates.IN_MENU, telegramUser);
                 sendMessage(chatId, "Вы вышли из режима общения");
                 return createMainMenu(chatId, false);
             }
@@ -165,40 +158,27 @@ public class ResponseHelper {
         }
     }
 
-    private SendMessage processVaacumatorFaqStepCommand(String chatId, Command command) throws TelegramApiException {
-        for (int stepNumber = 1; stepNumber <= commands.getVaacumatorFaqStepCommands().size(); stepNumber++) {
-            if (command.equals(commands.getVaacumatorFaqStepCommand(stepNumber))) {
-                execute(
-                        SendPhoto
-                                .builder()
-                                .chatId(chatId)
-                                .photo(
-                                        new InputFile()
-                                                .setMedia(
-                                                        FaqInfos.VaacumatorFaqInfos.StepImages.loadImage(stepNumber),
-                                                        "vaacumator-image-" + stepNumber)
-                                )
-                                .build()
-                );
-                return updateVaacumatorFaqStepReply(chatId, stepNumber);
-            }
+    private PartialBotApiMethod<?> processFaqCommand(String chatId, Command command) throws TelegramApiException {
+        if (command.equals(commands.getVaacumatorFaqCommand())) {
+            return createVaacumatorFaqReply(chatId);
+        } else if (command.equals(commands.getVaacumatorFirstFaqCommand())) {
+            return createVaacumatorFaqStepMessage(chatId, KnownFaq.VAACUMATOR_1);
+        } else if (command.equals(commands.getVaacumatorSecondFaqCommand())) {
+            return createVaacumatorFaqStepMessage(chatId, KnownFaq.VAACUMATOR_2);
+        } else {
+            handleError(Long.valueOf(chatId));
+            return null;
         }
-        throw new RuntimeException("Unexpected faq step has been detected");
     }
 
-    private SendMessage updateVaacumatorFaqStepReply(String chatId, int stepNumber) {
+    private SendMessage createVaacumatorFaqReply(String chatId) {
         return ReplyKeyboardMarkupBuilder
-                .create(
-                        String.valueOf(chatId),
-                        messageBundle.loadMessage(
-                                FaqInfos.VaacumatorFaqInfos.KNOWN_FAQ_MESSAGES_KEYS.get(stepNumber - 1)
-                        )
-                )
+                .create(chatId, "Для того, чтобы разобраться, как пользоваться упаковщиком, нужно изучить всего 2️⃣ момента")
                 .row()
-                .button(commands.getVaacumatorFaqStepCommand(1).getMessage())
-                .button(commands.getVaacumatorFaqStepCommand(2).getMessage())
-                .button(commands.getVaacumatorFaqStepCommand(3).getMessage())
-                .button(commands.getVaacumatorFaqStepCommand(4).getMessage())
+                .button(commands.getVaacumatorFirstFaqCommand().getMessage())
+                .endRow()
+                .row()
+                .button(commands.getVaacumatorSecondFaqCommand().getMessage())
                 .endRow()
                 .row()
                 .button(commands.getMainMenuCommand().getMessage())
@@ -206,40 +186,164 @@ public class ResponseHelper {
                 .buildAsSendMessage();
     }
 
-    private SendMessage processVaacumatorFaqCommand(String chatId) {
-        return updateVaacumatorFaqStepReply(chatId, 1);
-    }
+    private SendPhoto createVaacumatorFaqStepMessage(String chatId, KnownFaq vaacumatorFaq) {
+        String text = "";
+        String nextStepCallback = "";
 
-    public EditMessageText createInfoPage(String chatId, int messageId) {
+        switch (vaacumatorFaq) {
+            case VAACUMATOR_1 -> {
+                text = messageBundle.loadMessage(VaacumatorFaqInfos.FirstFaqInfo.StepMessages.FIRST_STEP_MESSAGE_KEY);
+                nextStepCallback = VaacumatorFaqInfos.FirstFaqInfo.StepCallbacks.SECOND_STEP_CALLBACK;
+            }
+            case VAACUMATOR_2 -> {
+                text = messageBundle.loadMessage(VaacumatorFaqInfos.SecondFaqInfo.StepMessages.FIRST_STEP_MESSAGE_KEY);
+                nextStepCallback = VaacumatorFaqInfos.SecondFaqInfo.StepCallbacks.SECOND_STEP_CALLBACK;
+            }
+        }
+
         return InlineKeyboardMarkupBuilder
-                .create(chatId, getInfoMessage())
+                .create(chatId)
+                .setText(text)
                 .row()
-                .button(createBackButton())
+                .button("Следующий шаг", nextStepCallback)
                 .endRow()
-                .rebuildAsEditMessageText(messageId);
+                .buildAsSendPhoto(
+                        new InputFile(
+                                KnownFaq.VAACUMATOR_1.equals(vaacumatorFaq)
+                                        ? FaqInfos.VaacumatorFaqInfos.FirstFaqInfo.StepImages.loadStepImage(1)
+                                        : KnownFaq.VAACUMATOR_2.equals(vaacumatorFaq)
+                                        ? FaqInfos.VaacumatorFaqInfos.SecondFaqInfo.StepImages.loadStepImage(1)
+                                        : null,
+                                "vaacumator-faq-image-1"
+                        )
+                );
     }
 
-    public EditMessageText createHelpPage(String chatId, int messageId) {
+    public PartialBotApiMethod<?> processFaqCallback(CallbackQuery callback) throws TelegramApiException {
+        String callbackData = callback.getData();
+        KnownFaq knownFaq;
+
+        if (Callback.Faq.Vaacumator.First.ALL_STEP_CALLBACKS.contains(callbackData)) {
+            knownFaq = KnownFaq.VAACUMATOR_1;
+        } else if (Callback.Faq.Vaacumator.Second.ALL_STEP_CALLBACKS.contains(callbackData)) {
+            knownFaq = KnownFaq.VAACUMATOR_2;
+        } else {
+            handleError(callback.getMessage().getChatId());
+            return null;
+        }
+
+        switch (knownFaq) {
+            case VAACUMATOR_1 -> {
+                return processVaacumatorFaq(callback, KnownFaq.VAACUMATOR_1);
+            }
+            case VAACUMATOR_2 -> {
+                return processVaacumatorFaq(callback, KnownFaq.VAACUMATOR_2);
+            }
+            default -> {
+                handleError(callback.getMessage().getChatId());
+                return null;
+            }
+        }
+    }
+
+    private SendPhoto processVaacumatorFaq(CallbackQuery callback, KnownFaq vaacumatorFaq) throws TelegramApiException {
+        Message message = callback.getMessage();
+        Long chatId = message.getChatId();
+        Integer messageId = message.getMessageId();
+        InlineKeyboardMarkupBuilder inlineKeyboardMarkupBuilder = InlineKeyboardMarkupBuilder.create(String.valueOf(chatId)).row();
+
+        switch (vaacumatorFaq) {
+
+            case VAACUMATOR_1 -> {
+                int stepNumber = getVaacumatorFaqStepNumber(callback, KnownFaq.VAACUMATOR_1);
+                execute(DeleteMessage.builder().chatId(chatId).messageId(messageId).build());
+                if (stepNumber != 0) {
+                    InlineKeyboardButton previousPage = new InlineKeyboardButton("Предыдущий шаг");
+                    previousPage.setCallbackData(Callback.Faq.Vaacumator.First.ALL_STEP_CALLBACKS.get(stepNumber - 1));
+                    inlineKeyboardMarkupBuilder.button(previousPage);
+                }
+                if (stepNumber < VaacumatorFaqInfos.FirstFaqInfo.STEPS_COUNT - 1) {
+                    InlineKeyboardButton nextPage = new InlineKeyboardButton("Следующий шаг");
+                    nextPage.setCallbackData(Callback.Faq.Vaacumator.First.ALL_STEP_CALLBACKS.get(stepNumber + 1));
+                    inlineKeyboardMarkupBuilder.button(nextPage);
+                }
+                return inlineKeyboardMarkupBuilder
+                        .setText(messageBundle.loadMessage(VaacumatorFaqInfos.FirstFaqInfo.StepMessages.KNOWN_FAQ_MESSAGES_KEYS.get(stepNumber)))
+                        .endRow()
+                        .buildAsSendPhoto(
+                                new InputFile(
+                                        FaqInfos.VaacumatorFaqInfos.FirstFaqInfo.StepImages.loadStepImage(stepNumber + 1),
+                                        "vaacumator-first-faq-image-" + stepNumber
+                                )
+                        );
+            }
+
+            case VAACUMATOR_2 -> {
+                int stepNumber = getVaacumatorFaqStepNumber(callback, KnownFaq.VAACUMATOR_2);
+                execute(DeleteMessage.builder().chatId(chatId).messageId(messageId).build());
+                if (stepNumber != 0) {
+                    InlineKeyboardButton previousPage = new InlineKeyboardButton("Предыдущий шаг");
+                    previousPage.setCallbackData(Callback.Faq.Vaacumator.Second.ALL_STEP_CALLBACKS.get(stepNumber - 1));
+                    inlineKeyboardMarkupBuilder.button(previousPage);
+                }
+                if (stepNumber < VaacumatorFaqInfos.SecondFaqInfo.STEPS_COUNT - 1) {
+                    InlineKeyboardButton nextPage = new InlineKeyboardButton("Следующий шаг");
+                    nextPage.setCallbackData(Callback.Faq.Vaacumator.Second.ALL_STEP_CALLBACKS.get(stepNumber + 1));
+                    inlineKeyboardMarkupBuilder.button(nextPage);
+                }
+                return inlineKeyboardMarkupBuilder
+                        .setText(messageBundle.loadMessage(VaacumatorFaqInfos.SecondFaqInfo.StepMessages.KNOWN_FAQ_MESSAGES_KEYS.get(stepNumber)))
+                        .endRow()
+                        .buildAsSendPhoto(
+                                new InputFile(
+                                        FaqInfos.VaacumatorFaqInfos.SecondFaqInfo.StepImages.loadStepImage(stepNumber + 1),
+                                        "vaacumator-first-faq-image-" + stepNumber
+                                )
+                        );
+            }
+
+            default -> {
+                handleError(message.getChatId());
+                return null;
+            }
+        }
+    }
+
+    private int getVaacumatorFaqStepNumber(CallbackQuery callback, KnownFaq vaacumatroFaq) {
+        String callbackData = callback.getData();
+        List<String> allStepCallbacks = KnownFaq.VAACUMATOR_1.equals(vaacumatroFaq)
+                ? Callback.Faq.Vaacumator.First.ALL_STEP_CALLBACKS
+                : KnownFaq.VAACUMATOR_2.equals(vaacumatroFaq)
+                ? Callback.Faq.Vaacumator.Second.ALL_STEP_CALLBACKS
+                : new ArrayList<>();
+
+        for (int i = 0; i < allStepCallbacks.size(); i++) {
+            if (allStepCallbacks.get(i).equals(callbackData)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public SendMessage processHelpCommand(String chatId) throws TelegramApiException {
+        sendMessage(chatId, getHelpMessage());
+        return createChatWithManager(chatId);
+    }
+
+    public SendMessage processMoneyCommand(String chatId) {
         return InlineKeyboardMarkupBuilder
-                .create(chatId, getHelpMessage())
+                .create(chatId)
+                .setText(getInfoMessage())
                 .row()
-                .button(createBackButton())
-                .endRow()
-                .rebuildAsEditMessageText(messageId);
-    }
-
-    public SendMessage processHelpCommand(String chatId) {
-        return ReplyKeyboardMarkupBuilder
-                .create(chatId, getHelpMessage())
-                .row()
-                .button(commands.getStopChattingCommand().getMessage())
+                .button("Ознакомился, начать чат", Callback.START_CHATTING)
                 .endRow()
                 .buildAsSendMessage();
     }
 
-    public SendMessage processMoneyCommand(String chatId) {
+    public SendMessage createChatWithManager(String chatId) {
         return ReplyKeyboardMarkupBuilder
-                .create(chatId, getInfoMessage())
+                .create(chatId, "Чтобы выйти из режима чата, нажмите " + commands.getStopChattingCommand().getMessage())
                 .row()
                 .button(commands.getStopChattingCommand().getMessage())
                 .endRow()
@@ -346,15 +450,6 @@ public class ResponseHelper {
                 .build();
     }
 
-    public EditMessageText createInstructionMessage(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder
-                .create(chatId, messageBundle.loadMessage("ftd.telegram_helper.message.details"))
-                .row()
-                .button(createBackButton())
-                .endRow()
-                .rebuildAsEditMessageText(messageId);
-    }
-
     private LongPollingBot getBot() {
         return applicationContext.getBean(LongPollingBot.class);
     }
@@ -383,12 +478,6 @@ public class ResponseHelper {
         keyboardMarkup.getKeyboard().add(row);
 
         return keyboardMarkup;
-    }
-
-    private InlineKeyboardButton createBackButton() {
-        InlineKeyboardButton backButton = new InlineKeyboardButton(Smiles.BACK.getUnicode() + " Назад");
-        backButton.setCallbackData(Callback.BACK);
-        return backButton;
     }
 
     private CallbackQuery createFakeCallbackQuery(Long chatId) {

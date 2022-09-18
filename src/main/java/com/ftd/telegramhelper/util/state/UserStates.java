@@ -3,8 +3,8 @@ package com.ftd.telegramhelper.util.state;
 public enum UserStates {
     NEW("new"),
     CAN_SEND_MESSAGES("can_send_messages"),
-    IN_PROGRESS("in_progress"),
-    READ_FAQ_VAACUMATOR("read_faq_vaacumator");
+    IN_MENU("in_menu"),
+    READ_FAQ("read_faq");
 
     private String value;
 

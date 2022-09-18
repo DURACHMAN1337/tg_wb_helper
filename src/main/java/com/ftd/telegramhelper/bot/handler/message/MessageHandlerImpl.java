@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -51,17 +52,18 @@ public class MessageHandlerImpl implements MessageHandler {
     }
 
     @Override
-    public BotApiMethod<?> processMessage(Message message)
+    public PartialBotApiMethod<?> processMessage(Message message)
             throws TelegramApiException, IncorrectFeedbackChannelPostException {
         Long chatId = message.getChatId();
         String chatIdAsString = String.valueOf(chatId);
+
         Command command = Command.create(message.getText());
         User user = message.getFrom();
 
-        if (commands.getStartCommand().equals(command)) {
+        if (command.getMessage() != null && commands.getStartCommand().equals(command)) {
             getOrCreateTelegramUser(user, chatId);
             return responseHelper.createMainMenu(chatIdAsString, true);
-        } else if (commands.getKnownCommands().contains(command)) {
+        } else if (command.getMessage() != null && commands.getKnownCommands().contains(command)) {
             return responseHelper.updateReplyKeyboardMarkup(
                     getOrCreateTelegramUser(user, chatId),
                     chatIdAsString,
