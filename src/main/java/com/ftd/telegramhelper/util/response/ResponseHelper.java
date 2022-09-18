@@ -1,12 +1,12 @@
 package com.ftd.telegramhelper.util.response;
 
 import com.ftd.telegramhelper.bot.longpolling.LongPollingBot;
+import com.ftd.telegramhelper.bot.meta.callback.ICallback;
+import com.ftd.telegramhelper.bot.meta.callback.KnownCallbacks;
 import com.ftd.telegramhelper.message.MessageBundle;
-import com.ftd.telegramhelper.util.callback.Callback;
-import com.ftd.telegramhelper.util.command.Command;
+import com.ftd.telegramhelper.message.MessageKeys;
 import com.ftd.telegramhelper.util.keyboard.inline.InlineKeyboardMarkupBuilder;
 import com.ftd.telegramhelper.util.keyboard.reply.ReplyKeyboardMarkupBuilder;
-import com.ftd.telegramhelper.util.message.Smiles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -42,9 +42,8 @@ public class ResponseHelper {
         this.messageBundle = messageBundle;
     }
 
-    public <T extends Serializable, Method extends BotApiMethod<T>> void execute(
-            Method method
-    ) throws TelegramApiException {
+    public <T extends Serializable, Method extends BotApiMethod<T>> void execute(Method method)
+            throws TelegramApiException {
         getBot().execute(method);
     }
 
@@ -56,55 +55,36 @@ public class ResponseHelper {
         getBot().execute(sendDocument);
     }
 
-    public SendMessage createMainMenu(String chatId) {
-        return InlineKeyboardMarkupBuilder
-                .create(String.valueOf(chatId), getWelcomeMessage())
-                .row()
-                .button(Smiles.DIGIT_ONE.getUnicode(), Callback.FIRST)
-                .button(Smiles.DIGIT_TWO.getUnicode(), Callback.SECOND)
-                .button(Smiles.DIGIT_THREE.getUnicode(), Callback.THIRD)
-                .endRow()
-                .buildAsSendMessage();
+    public SendMessage createMainMenu(String chatId, boolean replyMode) {
+        return replyMode
+                ? createReplyMainMenu(chatId)
+                : createInlineMainMenu(chatId);
     }
 
-    public void updateReplyMarkup(String chatId) throws TelegramApiException {
+    public EditMessageText recreateMainMenu(String chatId, int messageId, String text) {
+        return InlineKeyboardMarkupBuilder
+                .create(String.valueOf(chatId), text)
+                .row()
+                .endRow()
+                .rebuildAsEditMessageText(messageId);
+    }
+
+    public void updateReplyMarkup(String chatId, String text) throws TelegramApiException {
         execute(
                 ReplyKeyboardMarkupBuilder
-                        .create(chatId, Smiles.FIRE.getUnicode() + Smiles.FIRE.getUnicode() + Smiles.FIRE.getUnicode())
+                        .create(chatId, text)
                         .row()
-                        .button(Command.INSTRUCTION.getValue())
                         .endRow()
                         .buildAsSendMessage()
         );
     }
 
-    public EditMessageText recreateMainMenu(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder
-                .create(String.valueOf(chatId), getWelcomeMessage())
-                .row()
-                .button(Smiles.DIGIT_ONE.getUnicode(), Callback.FIRST)
-                .button(Smiles.DIGIT_TWO.getUnicode(), Callback.SECOND)
-                .button(Smiles.DIGIT_THREE.getUnicode(), Callback.THIRD)
-                .endRow()
-                .rebuildAsEditMessageText(messageId);
+    public InlineKeyboardButton createSuccessButton() {
+        return createButton(getSuccessMessage(), KnownCallbacks.SUCCESS_CALLBACK);
     }
 
-    public EditMessageText createInfoPage(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder
-                .create(chatId, getInfoMessage())
-                .row()
-                .button(createBackButton())
-                .endRow()
-                .rebuildAsEditMessageText(messageId);
-    }
-
-    public EditMessageText createHelpPage(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder
-                .create(chatId, getHelpMessage())
-                .row()
-                .button(createBackButton())
-                .endRow()
-                .rebuildAsEditMessageText(messageId);
+    public InlineKeyboardButton createFailureButton() {
+        return createButton(getFailureMessage(), KnownCallbacks.FAILURE_CALLBACK);
     }
 
     public Message sendMessage(String chatId, String message) throws TelegramApiException {
@@ -116,12 +96,12 @@ public class ResponseHelper {
         );
     }
 
-    public void replyToMessage(String chatId, String replyToMessageId, String message) throws TelegramApiException {
-        execute(
+    public Message replyToMessage(String chatId, int replyToMessageId, String message) throws TelegramApiException {
+        return applicationContext.getBean(LongPollingBot.class).execute(
                 SendMessage
                         .builder()
                         .chatId(chatId)
-                        .replyToMessageId(Integer.parseInt(replyToMessageId))
+                        .replyToMessageId(replyToMessageId)
                         .text(message)
                         .build()
         );
@@ -129,7 +109,7 @@ public class ResponseHelper {
 
     public void replyToMessage(
             String chatId,
-            String replyToMessageId,
+            int replyToMessageId,
             File photoOrDocument,
             boolean isDocument,
             InlineKeyboardButton... buttons
@@ -139,7 +119,7 @@ public class ResponseHelper {
                 ? SendDocument
                 .builder()
                 .chatId(chatId)
-                .replyToMessageId(Integer.parseInt(replyToMessageId))
+                .replyToMessageId(replyToMessageId)
                 .document(new InputFile().setMedia(photoOrDocument))
                 .replyMarkup(createMarkupKeyboard(buttons))
                 .build()
@@ -147,7 +127,7 @@ public class ResponseHelper {
                 : SendPhoto
                 .builder()
                 .chatId(chatId)
-                .replyToMessageId(Integer.parseInt(replyToMessageId))
+                .replyToMessageId(replyToMessageId)
                 .photo(new InputFile().setMedia(photoOrDocument))
                 .replyMarkup(createMarkupKeyboard(buttons))
                 .build();
@@ -159,23 +139,13 @@ public class ResponseHelper {
         }
     }
 
-    public InlineKeyboardButton createAcceptButton() {
-        InlineKeyboardButton acceptButton = new InlineKeyboardButton(
-                Smiles.CREDIT_CARD.getUnicode() + " Принять"
-        );
-        acceptButton.setCallbackData(Callback.SUCCESS);
+    public InlineKeyboardButton createButton(String text, ICallback callback) {
+        InlineKeyboardButton acceptButton = new InlineKeyboardButton(text);
+        acceptButton.setCallbackData(callback.getCallbackValue().getValue());
         return acceptButton;
     }
 
-    public InlineKeyboardButton createRejectButton() {
-        InlineKeyboardButton rejectButton = new InlineKeyboardButton(
-                Smiles.RED_X_SIGN.getUnicode() + " Отклонить"
-        );
-        rejectButton.setCallbackData(Callback.DENIED);
-        return rejectButton;
-    }
-
-    public void handleError(Long chatId) throws TelegramApiException {
+    public void handleError(String chatId) throws TelegramApiException {
         applicationContext.getBean(LongPollingBot.class).execute(
                 createErrorResponse(
                         createFakeCallbackQuery(chatId)
@@ -187,57 +157,48 @@ public class ResponseHelper {
         return SendMessage
                 .builder()
                 .chatId(getChatId(callbackQuery))
-                .text(messageBundle.loadMessage("ftd.telegram_helper.message.error"))
+                .text(getErrorMessage())
                 .build();
     }
 
-    public SendMessage createSuccessMessage(String chatId) {
-        return SendMessage
-                .builder()
-                .chatId(chatId)
-                .text(messageBundle.loadMessage("ftd.telegram_helper.message.success"))
-                .build();
-    }
-
-    public SendMessage createDeniedMessage(String chatId) {
-        return SendMessage
-                .builder()
-                .chatId(chatId)
-                .text(messageBundle.loadMessage("ftd.telegram_helper.message.failure"))
-                .build();
-    }
-
-    public EditMessageText createInstructionMessage(String chatId, int messageId) {
-        return InlineKeyboardMarkupBuilder
-                .create(chatId, messageBundle.loadMessage("ftd.telegram_helper.message.details"))
+    private SendMessage createReplyMainMenu(String chatId) {
+        return ReplyKeyboardMarkupBuilder
+                .create(String.valueOf(chatId), getWelcomeMessage())
                 .row()
-                .button(createBackButton())
                 .endRow()
-                .rebuildAsEditMessageText(messageId);
+                .buildAsSendMessage();
+    }
+
+    private SendMessage createInlineMainMenu(String chatId) {
+        return InlineKeyboardMarkupBuilder
+                .create(String.valueOf(chatId), getWelcomeMessage())
+                .row()
+                .endRow()
+                .buildAsSendMessage();
+    }
+
+    private String getSuccessMessage() {
+        return getMessageFromBundle(MessageKeys.SUCCESS_MESSAGE_KEY);
+    }
+
+    private String getFailureMessage() {
+        return getMessageFromBundle(MessageKeys.FAILURE_MESSAGE_KEY);
+    }
+
+    private String getErrorMessage() {
+        return getMessageFromBundle(MessageKeys.ERROR_MESSAGE_KEY);
+    }
+
+    private String getWelcomeMessage() {
+        return getMessageFromBundle(MessageKeys.WELCOME_MESSAGE_KEY);
+    }
+
+    private String getMessageFromBundle(String messageKey) {
+        return messageBundle.loadMessage(messageKey);
     }
 
     private LongPollingBot getBot() {
         return applicationContext.getBean(LongPollingBot.class);
-    }
-
-    private String getWelcomeMessage() {
-        return String.format(
-                messageBundle.loadMessage("ftd.telegram_helper.message.welcome"),
-                Smiles.DIGIT_ONE.getUnicode(), Smiles.DIGIT_TWO.getUnicode(), Smiles.DIGIT_THREE.getUnicode()
-        );
-    }
-
-    private String getInfoMessage() {
-        return String.format(
-                messageBundle.loadMessage("ftd.telegram_helper.message.info"),
-                Smiles.DIGIT_ONE.getUnicode(), Smiles.DIGIT_TWO.getUnicode(), Smiles.DIGIT_THREE.getUnicode(),
-                Smiles.DIGIT_FOUR.getUnicode(), Smiles.DIGIT_FIVE.getUnicode(), Smiles.DIGIT_SIX.getUnicode(),
-                Smiles.DIGIT_SEVEN.getUnicode()
-        );
-    }
-
-    private String getHelpMessage() {
-        return messageBundle.loadMessage("ftd.telegram_helper.message.help");
     }
 
     @Nullable
@@ -254,16 +215,10 @@ public class ResponseHelper {
         return keyboardMarkup;
     }
 
-    private InlineKeyboardButton createBackButton() {
-        InlineKeyboardButton backButton = new InlineKeyboardButton(Smiles.BACK.getUnicode() + " Назад");
-        backButton.setCallbackData(Callback.BACK);
-        return backButton;
-    }
-
-    private CallbackQuery createFakeCallbackQuery(Long chatId) {
+    private CallbackQuery createFakeCallbackQuery(String chatId) {
         CallbackQuery fakeCallback = new CallbackQuery();
         Message fakeCallbackMessage = new Message();
-        fakeCallbackMessage.setChat(new Chat(chatId, "private"));
+        fakeCallbackMessage.setChat(new Chat(Long.valueOf(chatId), "private"));
         fakeCallback.setMessage(fakeCallbackMessage);
         return fakeCallback;
     }

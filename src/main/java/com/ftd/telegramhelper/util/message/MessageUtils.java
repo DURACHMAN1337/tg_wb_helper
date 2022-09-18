@@ -9,10 +9,10 @@ import javax.annotation.Nullable;
 public class MessageUtils {
 
     @Nullable
-    public static Long getTelegramUserIdFromComment(Message message) {
-        Message replyToMessage = message.getReplyToMessage();
+    public static Long getTelegramUserIdFromFeedbackPost(Message feedbackPostMessage) {
+        Message replyToMessage = feedbackPostMessage.getReplyToMessage();
         if (replyToMessage == null) {
-           replyToMessage = message; // when we create feedback post firstly
+           replyToMessage = feedbackPostMessage; // when we create feedback post firstly
         }
 
         final String[] split = replyToMessage.getText().split("\n");
@@ -26,5 +26,4 @@ public class MessageUtils {
     public static boolean isImage(Document document) {
         return MimeTypeUtils.parseMimeType(document.getMimeType()).getType().equals("image");
     }
-
 }

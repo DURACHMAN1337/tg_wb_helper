@@ -18,7 +18,6 @@ import static com.ftd.telegramhelper.util.message.MessageUtils.isImage;
 @Component
 public class RequestHelper {
 
-    private static final String GET_UPDATES_URL = "https://api.telegram.org/bot%s/getUpdates?chat_id=%s";
     private final ApplicationContext applicationContext;
 
     @Autowired
@@ -30,12 +29,15 @@ public class RequestHelper {
     public File getPhotoFrom(Message message) {
         final LongPollingBot bot = applicationContext.getBean(LongPollingBot.class);
         final String fileId;
+
         if (message.hasPhoto()) {
             List<PhotoSize> photoSizes = message.getPhoto();
             PhotoSize photoSize = photoSizes.get(photoSizes.size() - 1);
             fileId = photoSize.getFileId();
+
         } else if (message.hasDocument() && isImage(message.getDocument())) {
             fileId = message.getDocument().getFileId();
+
         } else {
             return null;
         }

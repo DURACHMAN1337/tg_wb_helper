@@ -1,6 +1,6 @@
 package com.ftd.telegramhelper.feedback;
 
-import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
+import com.ftd.telegramhelper.config.bot.feedbackchannel.FeedbackChannelConfig;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class FeedbackService {
         if (feedbackAlreadyExist && StringUtils.hasText(message)) {
             responseHelper.replyToMessage(
                     feedbackChannelConfig.getChannelChatId(),
-                    feedbackMessageId,
+                    Integer.parseInt(feedbackMessageId),
                     message
             );
             logger.info("Feedback has been updated for user " + forUser);
@@ -52,11 +52,11 @@ public class FeedbackService {
         if (feedbackAlreadyExist && photoOrDocument != null) {
             responseHelper.replyToMessage(
                     feedbackChannelConfig.getChannelChatId(),
-                    feedbackMessageId,
+                    Integer.parseInt(feedbackMessageId),
                     photoOrDocument,
                     isDocument,
-                    responseHelper.createAcceptButton(),
-                    responseHelper.createRejectButton()
+                    responseHelper.createSuccessButton(),
+                    responseHelper.createFailureButton()
             );
             logger.info("Feedback has been updated for user " + forUser);
         } else if (!feedbackAlreadyExist) {

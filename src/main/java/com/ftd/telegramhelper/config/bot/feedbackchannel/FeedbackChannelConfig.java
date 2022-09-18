@@ -1,4 +1,4 @@
-package com.ftd.telegramhelper.config.bot.feedbackchanner;
+package com.ftd.telegramhelper.config.bot.feedbackchannel;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

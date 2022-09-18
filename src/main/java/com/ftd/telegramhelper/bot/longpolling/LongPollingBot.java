@@ -1,6 +1,6 @@
 package com.ftd.telegramhelper.bot.longpolling;
 
-import com.ftd.telegramhelper.bot.facade.TelegramBotFacade;
+import com.ftd.telegramhelper.bot.facade.ITelegramBotFacade;
 import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
 import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.exception.TelegramUserNotExistException;
@@ -19,12 +19,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class LongPollingBot extends TelegramLongPollingBot {
 
     private final LongPollingTelegramBotConfig config;
-    private final TelegramBotFacade facade;
+    private final ITelegramBotFacade facade;
     private final Logger logger = LoggerFactory.getLogger(LongPollingBot.class);
 
 
     @Autowired
-    public LongPollingBot(LongPollingTelegramBotConfig config, TelegramBotFacade facade) {
+    public LongPollingBot(LongPollingTelegramBotConfig config, ITelegramBotFacade facade) {
         this.config = config;
         this.facade = facade;
     }

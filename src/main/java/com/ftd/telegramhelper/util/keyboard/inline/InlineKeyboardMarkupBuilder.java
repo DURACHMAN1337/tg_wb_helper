@@ -1,6 +1,6 @@
 package com.ftd.telegramhelper.util.keyboard.inline;
 
-import com.ftd.telegramhelper.util.callback.Callback;
+import com.ftd.telegramhelper.bot.meta.callback.KnownCallbacks;
 import com.ftd.telegramhelper.util.keyboard.KeyboardMarkupBuilder;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -79,7 +79,7 @@ public class InlineKeyboardMarkupBuilder implements KeyboardMarkupBuilder {
 
     public InlineKeyboardMarkupBuilder titleRow(@NotNull String title) {
         row();
-        button(title, Callback.FAKE);
+        button(title, KnownCallbacks.FAKE_CALLBACK.getCallbackValue().getValue());
         endRow();
         return this;
     }
