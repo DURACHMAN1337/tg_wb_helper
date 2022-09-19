@@ -79,15 +79,15 @@ public class ResponseHelper {
                 )
 
                 .row()
+                .button(messageBundle.loadMessage("ftd.telegram_helper.command.faq.vaacumator"))
+                .endRow()
+
+                .row()
                 .button(messageBundle.loadMessage("ftd.telegram_helper.command.money"))
                 .endRow()
 
                 .row()
                 .button(messageBundle.loadMessage("ftd.telegram_helper.command.help"))
-                .endRow()
-
-                .row()
-                .button(messageBundle.loadMessage("ftd.telegram_helper.command.faq.vaacumator"))
                 .endRow()
 
                 .buildAsSendMessage();
