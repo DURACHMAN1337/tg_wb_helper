@@ -139,7 +139,8 @@ executeCommandViaSsh() {
 
 # check application dir on remote machine
 checkApplicationDirOnRemoteMachine() {
-  executeCommandViaSsh "sudo mkdir $remotePathAppFolder"
+  echo "Checking application folder on remote machine..."
+  executeCommandViaSsh "sudo mkdir -p $remotePathAppFolder"
   executeCommandViaSsh "sudo chmod 777 $remotePathAppFolder"
 }
 
@@ -242,6 +243,8 @@ deploy() {
   buildJar
 
   prepareFiles
+
+  checkApplicationDirOnRemoteMachine
   copyFilesToRemoteMachine
 
   dockerBuild
