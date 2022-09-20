@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:latest
     healthcheck:
-      test: "pg_isready -U postgres"
+      test: "pg_isready -U ${POSTGRES_USER} -p ${TELEGRAM_HELPER_DB_PORT}"
       interval: 5s
       timeout: 10s
       retries: 10
@@ -13,6 +13,7 @@ services:
       - POSTGRES_USER=${TELEGRAM_HELPER_DB_USERNAME}
       - POSTGRES_PASSWORD=${TELEGRAM_HELPER_DB_PASSWORD}
       - POSTGRES_DB=${TELEGRAM_HELPER_DB_NAME}
+      - TELEGRAM_HELPER_DB_PORT=${TELEGRAM_HELPER_DB_PORT}
     ports:
       - ${TELEGRAM_HELPER_DB_PORT}:${TELEGRAM_HELPER_DB_PORT}
   telegram_helper:
