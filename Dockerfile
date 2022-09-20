@@ -1,6 +1,6 @@
 FROM openjdk:17-slim
 
-EXPOSE 8080
+EXPOSE ${TELEGRAM_HELPER_PORT}
 
 COPY . /opt/telegram_helper
 
