@@ -15,7 +15,7 @@ currentLocalDirPath="${PWD}"
 localPathToJar="$currentLocalDirPath/build/libs/telegram_helper.jar"
 
 # remote app folder
-remoteAppFolderName="app"
+remoteAppFolderName="wellcum"
 
 # .env keys (will be written in deploy process)
 databasePortEnv="TELEGRAM_HELPER_DB_PORT"
