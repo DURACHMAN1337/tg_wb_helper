@@ -32,6 +32,12 @@ feedbackChannelChatIdEnv="TELEGRAM_HELPER_FEEDBACK_CHANNEL_CHAT_ID"
 #                                        - METHODS -
 #
 
+# return exit code '1' (ERROR_CODE) log exception message in console
+throwException() {
+  echo "[EXCEPTION]: Wrong credentials parameters count"
+  exit 1
+}
+
 # read and save remote machine public ipv4 from console
 readRemoteMachinePublicIpV4() {
   read -r -p "Enter public ipV4: " value
