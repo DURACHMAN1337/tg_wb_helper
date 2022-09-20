@@ -119,7 +119,8 @@ configureParametersFromConsole() {
 
 # update current project
 updateProject() {
-  git checkout master && git pull
+  # git checkout master && git pull
+  git pull
 }
 
 # build actual jar file via gradlew
