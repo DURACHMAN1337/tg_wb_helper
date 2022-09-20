@@ -20,7 +20,7 @@ services:
     command: -p ${TELEGRAM_HELPER_DB_PORT}
   telegram_helper_sholts:
     build:
-      context: ./api
+      context: .
       dockerfile: Dockerfile
       args:
         - TELEGRAM_HELPER_PORT=${TELEGRAM_HELPER_PORT}
