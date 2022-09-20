@@ -13,10 +13,17 @@ services:
       - POSTGRES_USER=${TELEGRAM_HELPER_DB_USERNAME}
       - POSTGRES_PASSWORD=${TELEGRAM_HELPER_DB_PASSWORD}
       - POSTGRES_DB=${TELEGRAM_HELPER_DB_NAME}
+    expose:
+      - ${TELEGRAM_HELPER_DB_PORT}
     ports:
       - ${TELEGRAM_HELPER_DB_PORT}:${TELEGRAM_HELPER_DB_PORT}
+    command: -p ${TELEGRAM_HELPER_DB_PORT}
   telegram_helper_sholts:
-    image: telegram_helper_sholts
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        - TELEGRAM_HELPER_PORT=${TELEGRAM_HELPER_PORT}
     volumes:
       - ./telegram_helper_home:/opt/telegram_helper_home
     environment:
@@ -30,7 +37,6 @@ services:
       - TELEGRAM_HELPER_DB_NAME=${TELEGRAM_HELPER_DB_NAME}
       - TELEGRAM_HELPER_DB_USERNAME=${TELEGRAM_HELPER_DB_USERNAME}
       - TELEGRAM_HELPER_DB_PASSWORD=${TELEGRAM_HELPER_DB_PASSWORD}
-      - TELEGRAM_HELPER_PORT=${TELEGRAM_HELPER_PORT}
     depends_on:
       postgres:
         condition: service_healthy
