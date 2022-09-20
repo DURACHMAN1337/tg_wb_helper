@@ -15,8 +15,8 @@ services:
       - POSTGRES_DB=${TELEGRAM_HELPER_DB_NAME}
     ports:
       - ${TELEGRAM_HELPER_DB_PORT}:${TELEGRAM_HELPER_DB_PORT}
-  telegram_helper:
-    image: telegram_helper
+  telegram_helper_wellcum:
+    image: telegram_helper_wellcum
     volumes:
       - ./telegram_helper_home:/opt/telegram_helper_home
     environment:
