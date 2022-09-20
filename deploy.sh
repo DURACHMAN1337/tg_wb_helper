@@ -248,7 +248,7 @@ deploy() {
   checkApplicationDirOnRemoteMachine
   copyFilesToRemoteMachine
 
-  dockerBuild
+  # dockerBuild - now we use 'build' section in docker-compose.yaml file
   dockerComposeUp
 }
 
