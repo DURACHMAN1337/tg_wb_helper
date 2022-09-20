@@ -17,9 +17,6 @@ localPathToJar="$currentLocalDirPath/build/libs/telegram_helper.jar"
 # remote app folder
 remoteAppFolderName="app"
 
-# remote path to jar
-remotePathAppFolder="/home/$remoteMachineSshUser/$remoteAppFolderName"
-
 # .env keys (will be written in deploy process)
 databasePortEnv="TELEGRAM_HELPER_DB_PORT"
 applicationPortEnv="TELEGRAM_HELPER_PORT"
@@ -238,6 +235,9 @@ deploy() {
     echo "[EXCEPTION]: Wrong parameters count was found"
     throwException
   fi
+
+  # remote path to jar
+  remotePathAppFolder="/home/$remoteMachineSshUser/$remoteAppFolderName"
 
   updateProject
 
