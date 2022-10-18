@@ -49,6 +49,7 @@ public class LongPollingBot extends TelegramLongPollingBot {
                 execute(((EditMessageText) processedUpdate));
             }
         } catch (TelegramApiException | TelegramUserNotExistException | IncorrectFeedbackChannelPostException e) {
+            // TODO: add queue with failed updates and try to execute later (with Timer or Sheduler)
             logger.error("Error in #onUpdateReceived method, message: " + e.getMessage());
         }
     }
