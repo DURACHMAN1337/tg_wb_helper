@@ -63,6 +63,8 @@ public class MessageHandlerImpl implements MessageHandler {
             return responseHelper.createMainMenu(chatIdAsString);
         } else if (isMessageFromFeedbackChat(message)) {
             processMessageFromFeedbackChannel(message);
+        } else if (Command.ADMIN.getValue().equals(command)) {
+
         } else {
             updateFeedbackFor(user, message);
         }

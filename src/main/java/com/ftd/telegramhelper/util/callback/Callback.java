@@ -8,4 +8,7 @@ public abstract class Callback {
     public static String SUCCESS = "success";
     public static String DENIED = "denied";
     public static String FAKE = "fake";
+    public static String EXIT = "exit";
+    public static String CHANGE_PASSWORD = "change_password";
+    public static String SEND_MASS_MAIL = "send_mass_mail";
 }

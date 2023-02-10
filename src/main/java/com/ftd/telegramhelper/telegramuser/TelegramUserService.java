@@ -6,6 +6,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +25,10 @@ public class TelegramUserService {
         telegramUser.setTelegramId(telegramUserId);
         Optional<TelegramUser> one = telegramUserRepository.findOne(Example.of(telegramUser));
         return one.orElse(null);
+    }
+
+    public List<TelegramUser> findAll(){
+      return telegramUserRepository.findAll();
     }
 
     public void save(TelegramUser telegramUser) {
