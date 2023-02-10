@@ -22,6 +22,7 @@ databasePortEnv="TELEGRAM_HELPER_DB_PORT"
 applicationPortEnv="TELEGRAM_HELPER_PORT"
 telegramBotTokenEnv="TELEGRAM_HELPER_BOT_TOKEN"
 telegramAdminUsernameEnv="TELEGRAM_HELPER_ADMIN_USERNAME"
+telegramAdminPanelPasswordEnv="TELEGRAM_HELPER_ADMIN_PANEL_PASSWORD"
 feedbackChannelIdEnv="TELEGRAM_HELPER_FEEDBACK_CHANNEL_ID"
 feedbackChannelChatIdEnv="TELEGRAM_HELPER_FEEDBACK_CHANNEL_CHAT_ID"
 
@@ -87,6 +88,12 @@ readTelegramBotAdminUsername() {
   echo "$value"
 }
 
+# read and save telegram bot admin username
+readTelegramBotAdminPanelPassword() {
+  read -r -s -p "Enter the telegram bot admin panel password: " value
+  echo "$value"
+}
+
 # read and save channel ID
 readTelegramBotChannelId() {
   read -r -s -p "Enter the telegram bot channel ID: " value
@@ -110,6 +117,7 @@ configureParametersFromConsole() {
 
   telegramBotToken=$(readTelegramBotToken)
   telegramAdminUsername=$(readTelegramBotAdminUsername)
+  telegramAdminPanelPassword=$(readTelegramBotAdminPanelPassword)
   feedbackChannelId=$(readTelegramBotChannelId)
   feedbackChannelChatId=$(readTelegramBotChannelChatId)
 }
@@ -182,6 +190,7 @@ writeEnvironmentVariables() {
     # telegram info:
     printf "\n%s=%s" "$telegramBotTokenEnv" "$telegramBotToken"
     printf "\n%s=%s" "$telegramAdminUsernameEnv" "$telegramAdminUsername"
+    printf "\n%s=%s" "$telegramAdminPanelPasswordEnv" "$telegramAdminPanelPassword"
     printf "\n%s=%s" "$feedbackChannelIdEnv" "$feedbackChannelId"
     printf "\n%s=%s" "$feedbackChannelChatIdEnv" "$feedbackChannelChatId"
 
@@ -216,7 +225,7 @@ deploy() {
 
   if [ "$#" -eq 0 ]; then # if parameters not passed (e.g. executed from local machine)
     configureParametersFromConsole
-  elif [ "$#" -eq 9 ]; then # if parameters passed, initialize bash environments
+  elif [ "$#" -eq 10 ]; then # if parameters passed, initialize bash environments
     # remote machine:
     remoteMachineAddress="$1"
     remoteMachineSshUser="$2"
@@ -227,8 +236,9 @@ deploy() {
 
     telegramBotToken="$6"
     telegramAdminUsername="$7"
-    feedbackChannelId="$8"
-    feedbackChannelChatId="$9"
+    telegramAdminUsername="$8"
+    feedbackChannelId="$9"
+    feedbackChannelChatId="${10}"
 
   # wrong count of passed parameters. Throw exception. Stop deploy process.
   else
@@ -256,8 +266,8 @@ deploy() {
 if [ "$#" -eq 0 ]; then # script has been executed without parameters.
   deploy                # execute deploy method without params [parameters will be configured from console].
 
-elif [ "$#" -eq 9 ]; then # if parameters passed.
-  deploy "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+elif [ "$#" -eq 10 ]; then # if parameters passed.
+  deploy "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10"
 
 else
   throwException # wrong count of passed parameters. Throw exception. Stop deploy process.

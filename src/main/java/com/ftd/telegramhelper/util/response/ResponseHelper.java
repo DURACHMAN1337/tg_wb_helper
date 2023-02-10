@@ -16,7 +16,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -53,20 +56,33 @@ public class ResponseHelper {
         getBot().execute(sendDocument);
     }
 
-    public SendMessage createPasswordCheckMessage(String chatId){
-        return null;
-    }
-    public SendMessage createAdminMenu(String chatId){
+    public SendMessage createMainAdminMenu(String chatId) {
         return InlineKeyboardMarkupBuilder
                 .create(chatId)
                 .row()
-                .button("Отправить сообщение",Callback.SEND_MASS_MAIL)
+                .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
                 .endRow()
                 .row()
-                .button("Сменить пароль", Callback.CHANGE_PASSWORD)
-                .button("Выход", Callback.EXIT)
+                .button("Сменить пароль", Callback.CHANGE_ADMIN_PASSWORD)
+                .button("Выход", Callback.EXIT_ADMIN_PANEL)
                 .endRow()
                 .buildAsSendMessage();
+    }
+
+    public SendMessage createAdminMenu(String chatId) {
+        return InlineKeyboardMarkupBuilder
+                .create(chatId)
+                .row()
+                .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
+                .endRow()
+                .row()
+                .button("Выход", Callback.EXIT_ADMIN_PANEL)
+                .endRow()
+                .buildAsSendMessage();
+    }
+
+    public SendMessage incorrectAdminPanelPassword(String chatId) {
+        return new SendMessage("[ADMIN_PANEL]: Неверный пароль. Отказано в доступен", chatId);
     }
 
     public SendMessage createMainMenu(String chatId) {

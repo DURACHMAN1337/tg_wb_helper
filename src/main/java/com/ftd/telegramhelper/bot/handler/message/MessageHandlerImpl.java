@@ -1,5 +1,6 @@
 package com.ftd.telegramhelper.bot.handler.message;
 
+import com.ftd.telegramhelper.adminpanel.AdminPanelService;
 import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
 import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.feedback.FeedbackService;
@@ -20,6 +21,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import javax.annotation.Nullable;
+
 import static com.ftd.telegramhelper.util.message.MessageUtils.isImage;
 
 @Component
@@ -28,6 +31,7 @@ public class MessageHandlerImpl implements MessageHandler {
     private static final Logger logger = LoggerFactory.getLogger(MessageHandlerImpl.class);
 
     private final TelegramUserService telegramUserService;
+    private final AdminPanelService adminPanelService;
     private final ResponseHelper responseHelper;
     private final FeedbackChannelConfig feedbackChannelConfig;
     private final FeedbackService feedbackService;
@@ -36,11 +40,12 @@ public class MessageHandlerImpl implements MessageHandler {
     @Autowired
     public MessageHandlerImpl(
             TelegramUserService telegramUserService,
-            ResponseHelper responseHelper,
+            AdminPanelService adminPanelService, ResponseHelper responseHelper,
             FeedbackChannelConfig feedbackChannelConfig,
             FeedbackService feedbackService,
             RequestHelper requestHelper) {
         this.telegramUserService = telegramUserService;
+        this.adminPanelService = adminPanelService;
         this.responseHelper = responseHelper;
         this.feedbackChannelConfig = feedbackChannelConfig;
         this.feedbackService = feedbackService;
@@ -63,13 +68,36 @@ public class MessageHandlerImpl implements MessageHandler {
             return responseHelper.createMainMenu(chatIdAsString);
         } else if (isMessageFromFeedbackChat(message)) {
             processMessageFromFeedbackChannel(message);
-        } else if (Command.ADMIN.getValue().equals(command)) {
-
+        } else if (command.contains(Command.ADMIN.getValue())) {
+            if (telegramUserService.isMainAdmin(user)) {
+                responseHelper.createMainAdminMenu(chatIdAsString);
+            } else if (adminPanelService.checkPassword(extractPassword(command))){
+                responseHelper.createAdminMenu(chatIdAsString);
+            } else {
+                responseHelper.incorrectAdminPanelPassword(chatIdAsString);
+            }
         } else {
             updateFeedbackFor(user, message);
         }
 
         return null;
+    }
+
+    /**
+     * null -> null
+     */
+    @Nullable
+    private String extractPassword(@Nullable String fromCommand) {
+        if (!StringUtils.hasText(fromCommand)) {
+            return null;
+        }
+
+        String[] split = fromCommand.split(" ");
+        if (split.length == 2) {
+            return split[1];
+        } else {
+            return null;
+        }
     }
 
     private void processMessageFromFeedbackChannel(Message message)
@@ -143,10 +171,11 @@ public class MessageHandlerImpl implements MessageHandler {
         );
     }
 
-    private void createTelegramUserIfNotExist(User user, Long chatId) {
+    private TelegramUser createTelegramUserIfNotExist(User user, Long chatId) {
         TelegramUser existingUser = telegramUserService.findBy(user.getId());
         if (existingUser == null) {
-            telegramUserService.createAndSaveFrom(user, chatId);
+            return telegramUserService.createAndSaveFrom(user, chatId);
         }
+        return existingUser;
     }
 }
