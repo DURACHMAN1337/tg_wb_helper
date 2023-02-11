@@ -63,7 +63,10 @@ public class ResponseHelper {
                 .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
                 .endRow()
                 .row()
-                .button("Сменить пароль", Callback.CHANGE_ADMIN_PASSWORD)
+                .button("Сменить пароль", Callback.CHANGE_ADMIN_PANEL_PASSWORD)
+                .button("Текущий пароль", Callback.CHANGE_ADMIN_PANEL_PASSWORD)
+                .endRow()
+                .row()
                 .button("Выход", Callback.EXIT_ADMIN_PANEL)
                 .endRow()
                 .buildAsSendMessage();
@@ -143,6 +146,14 @@ public class ResponseHelper {
                         .text(message)
                         .build()
         );
+    }
+
+    public void sendMessageAsync(String chatId, String message) throws TelegramApiException {
+        SendMessage sendMessage = SendMessage.builder()
+                .chatId(chatId)
+                .text(message)
+                .build();
+        applicationContext.getBean(LongPollingBot.class).executeAsync(sendMessage);
     }
 
     public void replyToMessage(String chatId, String replyToMessageId, String message) throws TelegramApiException {
@@ -299,5 +310,26 @@ public class ResponseHelper {
 
     private String getChatId(CallbackQuery callbackQuery) {
         return String.valueOf(callbackQuery.getMessage().getChatId());
+    }
+
+    public SendMessage changeAdminPasswordRequest(String chatId) {
+        return new SendMessage("Send new password", chatId);
+    }
+
+    public SendMessage currentAdminPassword(String chatId, String password) {
+        return new SendMessage("Current password is '" + password + "'", chatId);
+    }
+
+    public SendMessage massMailingRequest(String chatId) {
+        return new SendMessage("Введите текст рассылки", chatId);
+    }
+
+    public SendMessage massMailingSuccessfullySent(Long chatId, boolean isMainAdmin) {
+        return isMainAdmin
+                ? createMainAdminMenu(chatId.toString())
+                : createAdminMenu(chatId.toString());}
+
+    public SendMessage adminPasswordSuccessfullyChanged(String chatId, String newPassword) {
+        return new SendMessage("Password has benn changed. New password is: '" + newPassword + "'", chatId);
     }
 }

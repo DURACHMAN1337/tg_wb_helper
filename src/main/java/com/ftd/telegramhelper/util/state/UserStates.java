@@ -3,7 +3,9 @@ package com.ftd.telegramhelper.util.state;
 public enum UserStates {
     NEW("new"),
     CAN_SEND_MESSAGES("can_send_messages"),
-    IN_PROGRESS("in_progress");
+    IN_PROGRESS("in_progress"),
+    CAN_SEND_MASS_MAILING("can_send_mass_mailing"),
+    CAN_CHANGE_ADMIN_PASSWORD("can_send_admin_password");
 
     private String value;
 

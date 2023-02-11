@@ -2,8 +2,10 @@ package com.ftd.telegramhelper.bot.handler.message;
 
 import com.ftd.telegramhelper.adminpanel.AdminPanelService;
 import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
+import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
 import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.feedback.FeedbackService;
+import com.ftd.telegramhelper.massmailing.MassMailingService;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.telegramuser.TelegramUserService;
 import com.ftd.telegramhelper.util.command.Command;
@@ -36,6 +38,8 @@ public class MessageHandlerImpl implements MessageHandler {
     private final FeedbackChannelConfig feedbackChannelConfig;
     private final FeedbackService feedbackService;
     private final RequestHelper requestHelper;
+    private final MassMailingService massMailingService;
+    private final LongPollingTelegramBotConfig botConfig;
 
     @Autowired
     public MessageHandlerImpl(
@@ -43,13 +47,16 @@ public class MessageHandlerImpl implements MessageHandler {
             AdminPanelService adminPanelService, ResponseHelper responseHelper,
             FeedbackChannelConfig feedbackChannelConfig,
             FeedbackService feedbackService,
-            RequestHelper requestHelper) {
+            RequestHelper requestHelper, MassMailingService massMailingService,
+            LongPollingTelegramBotConfig botConfig) {
         this.telegramUserService = telegramUserService;
         this.adminPanelService = adminPanelService;
         this.responseHelper = responseHelper;
         this.feedbackChannelConfig = feedbackChannelConfig;
         this.feedbackService = feedbackService;
         this.requestHelper = requestHelper;
+        this.massMailingService = massMailingService;
+        this.botConfig = botConfig;
     }
 
     @Override
@@ -57,25 +64,43 @@ public class MessageHandlerImpl implements MessageHandler {
             throws TelegramApiException, IncorrectFeedbackChannelPostException {
         Long chatId = message.getChatId();
         String chatIdAsString = String.valueOf(chatId);
-        String command = message.getText();
+        String messageText = message.getText();
         User user = message.getFrom();
+        TelegramUser telegramUser = getTelegramUser(user, chatId);
 
-        if (Command.START.getValue().equals(command)) {
+        if (Command.START.getValue().equals(messageText)) {
             createTelegramUserIfNotExist(user, chatId);
             responseHelper.updateReplyMarkup(chatIdAsString);
             return responseHelper.createMainMenu(chatIdAsString);
-        } else if (Command.INSTRUCTION.getValue().equals(command)) {
+        } else if (Command.INSTRUCTION.getValue().equals(messageText)) {
             return responseHelper.createMainMenu(chatIdAsString);
         } else if (isMessageFromFeedbackChat(message)) {
             processMessageFromFeedbackChannel(message);
-        } else if (command.contains(Command.ADMIN.getValue())) {
+        } else if (messageText.contains(Command.ADMIN.getValue())) {
             if (telegramUserService.isMainAdmin(user)) {
                 responseHelper.createMainAdminMenu(chatIdAsString);
-            } else if (adminPanelService.checkPassword(extractPassword(command))){
+            } else if (adminPanelService.checkPassword(extractPassword(messageText))) {
                 responseHelper.createAdminMenu(chatIdAsString);
             } else {
                 responseHelper.incorrectAdminPanelPassword(chatIdAsString);
             }
+        } else if (telegramUser != null
+                && UserStates.CAN_SEND_MASS_MAILING.equals(telegramUser.getState())
+        ) {
+            massMailingService.sendMassMail(messageText);
+
+            telegramUser.setState(UserStates.IN_PROGRESS);
+            telegramUserService.save(telegramUser);
+
+            return responseHelper.massMailingSuccessfullySent(chatId, telegramUserService.isMainAdmin(user));
+        } else if (telegramUser != null
+                && UserStates.CAN_CHANGE_ADMIN_PASSWORD.equals(telegramUser.getState())) {
+            botConfig.setAdminPanelCustomPassword(messageText);
+
+            telegramUser.setState(UserStates.IN_PROGRESS);
+            telegramUserService.save(telegramUser);
+
+            return responseHelper.adminPasswordSuccessfullyChanged(chatIdAsString, messageText);
         } else {
             updateFeedbackFor(user, message);
         }
@@ -98,6 +123,10 @@ public class MessageHandlerImpl implements MessageHandler {
         } else {
             return null;
         }
+    }
+
+    private TelegramUser getTelegramUser(User user, Long chatId) {
+        return telegramUserService.findBy(user, chatId);
     }
 
     private void processMessageFromFeedbackChannel(Message message)

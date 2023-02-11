@@ -1,5 +1,6 @@
 package com.ftd.telegramhelper.bot.handler.callback;
 
+import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
 import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.exception.TelegramUserNotExistException;
 import com.ftd.telegramhelper.feedback.FeedbackService;
@@ -26,16 +27,18 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
     private final FeedbackService feedbackService;
     private final ResponseHelper responseHelper;
     private final TelegramUserService telegramUserService;
+    private final LongPollingTelegramBotConfig botConfig;
 
     @Autowired
     public CallbackQueryHandlerImpl(
             FeedbackService feedbackService,
             ResponseHelper responseHelper,
-            TelegramUserService telegramUserService
-    ) {
+            TelegramUserService telegramUserService,
+            LongPollingTelegramBotConfig botConfig) {
         this.feedbackService = feedbackService;
         this.responseHelper = responseHelper;
         this.telegramUserService = telegramUserService;
+        this.botConfig = botConfig;
     }
 
     @Override
@@ -70,6 +73,17 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
             setSuitableState(UserStates.IN_PROGRESS, telegramUser);
             return responseHelper.recreateMainMenu(chatId, messageId);
 
+        } else if (Callback.CHANGE_ADMIN_PANEL_PASSWORD.equals(callbackData)) {
+            setSuitableState(UserStates.CAN_CHANGE_ADMIN_PASSWORD, telegramUser);
+            return responseHelper.changeAdminPasswordRequest(chatId);
+
+        } else if (Callback.CURRENT_ADMIN_PANEL_PASSWORD.equals(callbackData)) {
+            String password = botConfig.getAdminPanelPassword();
+            return responseHelper.currentAdminPassword(chatId, password);
+
+        } else if (Callback.SEND_MASS_MAIL.equals(callbackData)) {
+            setSuitableState(UserStates.CAN_SEND_MASS_MAILING, telegramUser);
+            return responseHelper.massMailingRequest(chatId);
         } else {
             responseHelper.handleError(Long.valueOf(chatId));
             return null;

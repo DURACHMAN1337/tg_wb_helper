@@ -9,6 +9,7 @@ public abstract class Callback {
     public static String DENIED = "denied";
     public static String FAKE = "fake";
     public static String EXIT_ADMIN_PANEL = "exit_admin_panel";
-    public static String CHANGE_ADMIN_PASSWORD = "change_admin_password";
+    public static String CHANGE_ADMIN_PANEL_PASSWORD = "change_admin_panel_password";
+    public static String CURRENT_ADMIN_PANEL_PASSWORD = "current_admin_panel_password";
     public static String SEND_MASS_MAIL = "send_mass_mail";
 }

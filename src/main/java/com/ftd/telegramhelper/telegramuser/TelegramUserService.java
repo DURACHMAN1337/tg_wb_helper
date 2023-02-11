@@ -34,15 +34,13 @@ public class TelegramUserService {
         return one.orElse(null);
     }
 
-    public TelegramUser findBy(String username) {
+    public TelegramUser findBy(User user, Long chatId) {
         TelegramUser telegramUser = new TelegramUser();
-        telegramUser.setUsername(username);
+        telegramUser.setTelegramId(user.getId());
+        telegramUser.setUsername(user.getUserName());
+        telegramUser.setChatId(chatId);
         Optional<TelegramUser> one = telegramUserRepository.findOne(Example.of(telegramUser));
         return one.orElse(null);
-    }
-
-    public TelegramUser findBy(User user) {
-        return findBy(user.getUserName());
     }
 
     public List<TelegramUser> findAll(){
@@ -65,6 +63,21 @@ public class TelegramUserService {
         telegramUser.setId(UUID.randomUUID());
 
         return save(telegramUser);
+    }
+
+    public boolean isEqualsUsers(TelegramUser first, TelegramUser second) {
+        Long firstTelegramId = first.getTelegramId();
+        Long secondTelegramId = second.getTelegramId();
+
+        UUID firstId = first.getId();
+        UUID secondId = second.getId();
+
+        Long firstChatId = first.getChatId();
+        Long secondChatId = second.getChatId();
+
+        return firstId.equals(secondId)
+                && firstTelegramId.equals(secondTelegramId)
+                && firstChatId.equals(secondChatId);
     }
 
     public boolean isMainAdmin(@Nullable User user) {

@@ -3,13 +3,19 @@ package com.ftd.telegramhelper.massmailing;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.telegramuser.TelegramUserService;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MassMailingServiceImpl implements MassMailingService {
 
+    private static final Logger log = LoggerFactory.getLogger(MassMailingServiceImpl.class);
     final TelegramUserService telegramUserService;
     final ResponseHelper responseHelper;
 
@@ -20,14 +26,25 @@ public class MassMailingServiceImpl implements MassMailingService {
 
     @Override
     public void sendMassMail(String message) {
-        telegramUserService.findAll().forEach(telegramUser -> sendMessageToUser(message, telegramUser));
+        List<TelegramUser> users = telegramUserService.findAll();
+        List<TelegramUser> successfullySent = users.stream()
+                .filter(telegramUser -> sendMessageToUser(message, telegramUser))
+                .toList();
+        log.info("Mass mailing info: [Sent mails: " + successfullySent.size() + "]");
     }
 
-    public void sendMessageToUser(String message, TelegramUser telegramUser) {
+    public boolean sendMessageToUser(String message, TelegramUser telegramUser) {
         try {
-            responseHelper.sendMessage(String.valueOf(telegramUser.getChatId()), message);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            String chatId = telegramUser.getChatId().toString();
+            if (StringUtils.hasText(chatId)) {
+                responseHelper.sendMessageAsync(chatId, message);
+                return true;
+            } else {
+                log.warn("chat id not found for user " + telegramUser);
+                return false;
+            }
+        } catch (TelegramApiException ignored) {
         }
+        return false;
     }
 }
