@@ -1,7 +1,7 @@
 package com.ftd.telegramhelper.bot.handler.message;
 
 import com.ftd.telegramhelper.adminpanel.AdminPanelService;
-import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
+import com.ftd.telegramhelper.config.bot.feedbackchannel.FeedbackChannelConfig;
 import com.ftd.telegramhelper.config.bot.longpolling.LongPollingTelegramBotConfig;
 import com.ftd.telegramhelper.exception.IncorrectFeedbackChannelPostException;
 import com.ftd.telegramhelper.feedback.FeedbackService;

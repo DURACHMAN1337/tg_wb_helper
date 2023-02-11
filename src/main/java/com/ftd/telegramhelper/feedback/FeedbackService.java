@@ -1,6 +1,6 @@
 package com.ftd.telegramhelper.feedback;
 
-import com.ftd.telegramhelper.config.bot.feedbackchanner.FeedbackChannelConfig;
+import com.ftd.telegramhelper.config.bot.feedbackchannel.FeedbackChannelConfig;
 import com.ftd.telegramhelper.telegramuser.TelegramUser;
 import com.ftd.telegramhelper.util.response.ResponseHelper;
 import org.slf4j.Logger;
