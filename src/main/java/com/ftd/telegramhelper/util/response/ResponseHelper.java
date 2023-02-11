@@ -58,13 +58,13 @@ public class ResponseHelper {
 
     public SendMessage createMainAdminMenu(String chatId) {
         return InlineKeyboardMarkupBuilder
-                .create(chatId)
+                .create(chatId, "Admin menu")
                 .row()
                 .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
                 .endRow()
                 .row()
                 .button("Сменить пароль", Callback.CHANGE_ADMIN_PANEL_PASSWORD)
-                .button("Текущий пароль", Callback.CHANGE_ADMIN_PANEL_PASSWORD)
+                .button("Текущий пароль", Callback.CURRENT_ADMIN_PANEL_PASSWORD)
                 .endRow()
                 .row()
                 .button("Выход", Callback.EXIT_ADMIN_PANEL)
@@ -74,7 +74,7 @@ public class ResponseHelper {
 
     public SendMessage createAdminMenu(String chatId) {
         return InlineKeyboardMarkupBuilder
-                .create(chatId)
+                .create(chatId, "Admin menu")
                 .row()
                 .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
                 .endRow()
@@ -313,23 +313,24 @@ public class ResponseHelper {
     }
 
     public SendMessage changeAdminPasswordRequest(String chatId) {
-        return new SendMessage("Send new password", chatId);
+        return new SendMessage(chatId, "Send new password");
     }
 
     public SendMessage currentAdminPassword(String chatId, String password) {
-        return new SendMessage("Current password is '" + password + "'", chatId);
+        return new SendMessage(chatId, "Current password is '" + password + "'");
     }
 
     public SendMessage massMailingRequest(String chatId) {
-        return new SendMessage("Введите текст рассылки", chatId);
+        return new SendMessage(chatId, "Введите текст рассылки");
     }
 
     public SendMessage massMailingSuccessfullySent(Long chatId, boolean isMainAdmin) {
         return isMainAdmin
                 ? createMainAdminMenu(chatId.toString())
-                : createAdminMenu(chatId.toString());}
+                : createAdminMenu(chatId.toString());
+    }
 
     public SendMessage adminPasswordSuccessfullyChanged(String chatId, String newPassword) {
-        return new SendMessage("Password has benn changed. New password is: '" + newPassword + "'", chatId);
+        return new SendMessage(chatId, "Password has benn changed. New password is: '" + newPassword + "'");
     }
 }

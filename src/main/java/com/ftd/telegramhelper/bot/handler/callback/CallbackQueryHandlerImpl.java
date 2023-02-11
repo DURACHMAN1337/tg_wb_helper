@@ -84,6 +84,9 @@ public class CallbackQueryHandlerImpl implements CallbackQueryHandler {
         } else if (Callback.SEND_MASS_MAIL.equals(callbackData)) {
             setSuitableState(UserStates.CAN_SEND_MASS_MAILING, telegramUser);
             return responseHelper.massMailingRequest(chatId);
+        } else if (Callback.EXIT_ADMIN_PANEL.equals(callbackData)) {
+            setSuitableState(UserStates.IN_PROGRESS, telegramUser);
+            return responseHelper.recreateMainMenu(chatId, messageId);
         } else {
             responseHelper.handleError(Long.valueOf(chatId));
             return null;

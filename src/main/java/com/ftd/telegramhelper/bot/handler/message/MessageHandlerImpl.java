@@ -78,11 +78,11 @@ public class MessageHandlerImpl implements MessageHandler {
             processMessageFromFeedbackChannel(message);
         } else if (messageText.contains(Command.ADMIN.getValue())) {
             if (telegramUserService.isMainAdmin(user)) {
-                responseHelper.createMainAdminMenu(chatIdAsString);
+                return responseHelper.createMainAdminMenu(chatIdAsString);
             } else if (adminPanelService.checkPassword(extractPassword(messageText))) {
-                responseHelper.createAdminMenu(chatIdAsString);
+                return responseHelper.createAdminMenu(chatIdAsString);
             } else {
-                responseHelper.incorrectAdminPanelPassword(chatIdAsString);
+                return responseHelper.incorrectAdminPanelPassword(chatIdAsString);
             }
         } else if (telegramUser != null
                 && UserStates.CAN_SEND_MASS_MAILING.equals(telegramUser.getState())
