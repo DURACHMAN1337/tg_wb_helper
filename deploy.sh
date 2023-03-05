@@ -225,7 +225,7 @@ deploy() {
 
   if [ "$#" -eq 0 ]; then # if parameters not passed (e.g. executed from local machine)
     configureParametersFromConsole
-  elif [ "$#" -eq 10 ]; then # if parameters passed, initialize bash environments
+  elif [ "$#" -eq 9 ]; then # if parameters passed, initialize bash environments
     # remote machine:
     remoteMachineAddress="$1"
     remoteMachineSshUser="$2"
@@ -236,9 +236,8 @@ deploy() {
 
     telegramBotToken="$6"
     telegramAdminUsername="$7"
-    telegramAdminUsername="$8"
-    feedbackChannelId="$9"
-    feedbackChannelChatId="${10}"
+    feedbackChannelId="$8"
+    feedbackChannelChatId="$9"
 
   # wrong count of passed parameters. Throw exception. Stop deploy process.
   else
@@ -267,7 +266,7 @@ if [ "$#" -eq 0 ]; then # script has been executed without parameters.
   deploy                # execute deploy method without params [parameters will be configured from console].
 
 elif [ "$#" -eq 10 ]; then # if parameters passed.
-  deploy "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10"
+  deploy "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 
 else
   throwException # wrong count of passed parameters. Throw exception. Stop deploy process.
