@@ -56,9 +56,9 @@ public class ResponseHelper {
         getBot().execute(sendDocument);
     }
 
-    public SendMessage createMainAdminMenu(String chatId) {
+    public SendMessage createMainAdminMenu(String chatId, String caption) {
         return InlineKeyboardMarkupBuilder
-                .create(chatId, "Admin menu")
+                .create(chatId, caption)
                 .row()
                 .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
                 .endRow()
@@ -72,9 +72,9 @@ public class ResponseHelper {
                 .buildAsSendMessage();
     }
 
-    public SendMessage createAdminMenu(String chatId) {
+    public SendMessage createAdminMenu(String chatId, String caption) {
         return InlineKeyboardMarkupBuilder
-                .create(chatId, "Admin menu")
+                .create(chatId, caption)
                 .row()
                 .button("Отправить сообщение", Callback.SEND_MASS_MAIL)
                 .endRow()
@@ -154,6 +154,15 @@ public class ResponseHelper {
                 .text(message)
                 .build();
         applicationContext.getBean(LongPollingBot.class).executeAsync(sendMessage);
+    }
+
+    public void sendPhotoAsync(String chatId, String message, File photo) throws TelegramApiException {
+        SendPhoto sendPhoto = SendPhoto.builder()
+                .chatId(chatId)
+                .caption(message)
+                .photo(new InputFile().setMedia(photo))
+                .build();
+        applicationContext.getBean(LongPollingBot.class).executeAsync(sendPhoto);
     }
 
     public void replyToMessage(String chatId, String replyToMessageId, String message) throws TelegramApiException {
@@ -321,13 +330,13 @@ public class ResponseHelper {
     }
 
     public SendMessage massMailingRequest(String chatId) {
-        return new SendMessage(chatId, "Введите текст рассылки");
+        return new SendMessage(chatId, messageBundle.loadMessage("ftd.telegram_helper.massMailRequest.caption"));
     }
 
     public SendMessage massMailingSuccessfullySent(Long chatId, boolean isMainAdmin) {
         return isMainAdmin
-                ? createMainAdminMenu(chatId.toString())
-                : createAdminMenu(chatId.toString());
+                ? createMainAdminMenu(chatId.toString(), "Mass mailing was successfully sent")
+                : createAdminMenu(chatId.toString(), "Mass mailing was successfully sent");
     }
 
     public SendMessage adminPasswordSuccessfullyChanged(String chatId, String newPassword) {

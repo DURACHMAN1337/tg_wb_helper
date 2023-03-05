@@ -76,18 +76,21 @@ public class MessageHandlerImpl implements MessageHandler {
             return responseHelper.createMainMenu(chatIdAsString);
         } else if (isMessageFromFeedbackChat(message)) {
             processMessageFromFeedbackChannel(message);
-        } else if (messageText.contains(Command.ADMIN.getValue())) {
+        } else if (messageText != null && messageText.contains(Command.ADMIN.getValue())) {
             if (telegramUserService.isMainAdmin(user)) {
-                return responseHelper.createMainAdminMenu(chatIdAsString);
+                return responseHelper.createMainAdminMenu(chatIdAsString, "Admin menu");
             } else if (adminPanelService.checkPassword(extractPassword(messageText))) {
-                return responseHelper.createAdminMenu(chatIdAsString);
+                return responseHelper.createAdminMenu(chatIdAsString, "Admin menu");
             } else {
                 return responseHelper.incorrectAdminPanelPassword(chatIdAsString);
             }
-        } else if (telegramUser != null
-                && UserStates.CAN_SEND_MASS_MAILING.equals(telegramUser.getState())
-        ) {
-            massMailingService.sendMassMail(messageText);
+        } else if (telegramUser != null && UserStates.CAN_SEND_MASS_MAILING.equals(telegramUser.getState())) {
+
+            if (messageText == null && message.hasPhoto()) {
+                massMailingService.sendMassMail(message.getCaption(), requestHelper.getPhotoFrom(message));
+            } else if (messageText != null) {
+                massMailingService.sendMassMail(messageText);
+            }
 
             telegramUser.setState(UserStates.IN_PROGRESS);
             telegramUserService.save(telegramUser);
