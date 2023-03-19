@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class MassMailingServiceImpl implements MassMailingService {
@@ -27,22 +28,54 @@ public class MassMailingServiceImpl implements MassMailingService {
     @Override
     public void sendMassMail(String message) {
         List<TelegramUser> users = telegramUserService.findAll();
-        List<TelegramUser> successfullySent = users.stream()
-                .filter(telegramUser -> sendMessageToUser(message, telegramUser))
-                .toList();
-        log.info("Mass mailing info: [Sent mails: " + successfullySent.size() + "]");
+        doSend(users, message);
     }
 
     @Override
     public void sendMassMail(String message, File photo) {
         List<TelegramUser> users = telegramUserService.findAll();
-        List<TelegramUser> successfullySent = users.stream()
-                .filter(telegramUser -> sendPhotoToUser(message, photo, telegramUser))
-                .toList();
-        log.info("Mass mailing info: [Sent mails: " + successfullySent.size() + "]");
+        doSend(users, message, photo);
     }
 
-    public boolean sendMessageToUser(String message, TelegramUser telegramUser) {
+    private void doSend(List<TelegramUser> users, String message) {
+        users.stream()
+                .limit(30)
+                .forEach(telegramUser -> sendMessageToUser(message, telegramUser));
+
+        List<TelegramUser> nextBatch = users.stream().skip(30).toList();
+
+        if (nextBatch.isEmpty()) {
+            return;
+        }
+
+        try {
+            TimeUnit.SECONDS.sleep(1);
+            doSend(nextBatch, message);
+        } catch (InterruptedException e) {
+            log.warn("InterruptedException when send message", e);
+        }
+    }
+
+    private void doSend(List<TelegramUser> users, String message, File photo) {
+        users.stream()
+                .limit(30)
+                .forEach(telegramUser -> sendPhotoToUser(message, photo, telegramUser));
+
+        List<TelegramUser> nextBatch = users.stream().skip(30).toList();
+
+        if (nextBatch.isEmpty()) {
+            return;
+        }
+
+        try {
+            TimeUnit.SECONDS.sleep(1);
+            doSend(nextBatch, message, photo);
+        } catch (InterruptedException e) {
+            log.warn("InterruptedException when send message", e);
+        }
+    }
+
+    private boolean sendMessageToUser(String message, TelegramUser telegramUser) {
         try {
             String chatId = telegramUser.getChatId().toString();
             if (StringUtils.hasText(chatId)) {
@@ -52,12 +85,13 @@ public class MassMailingServiceImpl implements MassMailingService {
                 log.warn("chat id not found for user " + telegramUser);
                 return false;
             }
-        } catch (TelegramApiException ignored) {
+        } catch (TelegramApiException e) {
+            log.warn("Exception when send message", e);
         }
         return false;
     }
 
-    public boolean sendPhotoToUser(String message, File photo, TelegramUser telegramUser) {
+    private boolean sendPhotoToUser(String message, File photo, TelegramUser telegramUser) {
         try {
             String chatId = telegramUser.getChatId().toString();
             if (StringUtils.hasText(chatId)) {
@@ -67,7 +101,8 @@ public class MassMailingServiceImpl implements MassMailingService {
                 log.warn("chat id not found for user " + telegramUser);
                 return false;
             }
-        } catch (TelegramApiException ignored) {
+        } catch (TelegramApiException e) {
+            log.warn("Exception when send photo", e);
         }
         return false;
     }
