@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class ResponseHelper {
@@ -148,12 +149,12 @@ public class ResponseHelper {
         );
     }
 
-    public void sendMessageAsync(String chatId, String message) throws TelegramApiException {
+    public CompletableFuture<Message> sendMessageAsync(String chatId, String message) throws TelegramApiException {
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text(message)
                 .build();
-        applicationContext.getBean(LongPollingBot.class).executeAsync(sendMessage);
+        return applicationContext.getBean(LongPollingBot.class).executeAsync(sendMessage);
     }
 
     public void sendPhotoAsync(String chatId, String message, File photo) throws TelegramApiException {
